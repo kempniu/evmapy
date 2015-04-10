@@ -1,6 +1,9 @@
 evmapy
 ======
 
+.. image:: https://img.shields.io/travis/kempniu/evmapy.svg
+   :target: https://travis-ci.org/kempniu/evmapy
+
 Summary
 -------
 

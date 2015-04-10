@@ -1,0 +1,12 @@
+language: python
+python:
+  - "3.3"
+  - "3.4"
+install:
+  - pip install evdev
+  - pip install pep8
+  - pip install pylint
+script:
+  - python setup.py test
+  - pep8 evmapy tests
+  - pylint evmapy tests
