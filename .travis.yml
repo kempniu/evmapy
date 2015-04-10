@@ -6,7 +6,11 @@ install:
   - pip install evdev
   - pip install pep8
   - pip install pylint
+  - pip install coveralls
 script:
-  - python setup.py test
+  - coverage run --source=evmapy setup.py test
   - pep8 evmapy tests
   - pylint evmapy tests
+  - coverage report --fail-under=100
+after_success:
+  - coveralls

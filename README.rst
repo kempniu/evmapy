@@ -4,6 +4,9 @@ evmapy
 .. image:: https://img.shields.io/travis/kempniu/evmapy.svg
    :target: https://travis-ci.org/kempniu/evmapy
 
+.. image:: https://img.shields.io/coveralls/kempniu/evmapy.svg
+   :target: https://coveralls.io/r/kempniu/evmapy
+
 Summary
 -------
 
