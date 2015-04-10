@@ -10,7 +10,7 @@ evmapy
 Summary
 -------
 
-`evmapy` is an evdev event mapper written in Python. This mumbo-jumbo translates into English as "an application for the Linux operating system capable of performing arbitrary actions upon detecting certain input events".
+*evmapy* is an evdev event mapper written in Python. This mumbo-jumbo translates into English as "an application for the Linux operating system capable of performing arbitrary actions upon detecting certain input events".
 
 In layman's terms, this piece of software enables you to make your system think you pressed a button on the keyboard when you move an analog stick on your joypad or run a program of your choosing when you hold your computer's power button.
 
@@ -26,7 +26,7 @@ Features
 
 - Works with any evdev-compatible input device, from a power button to a 6-axis joypad
 - Automatic input device configuration generation
-- Runs in foreground or as a daemon (using external software like `start-stop-daemon`)
+- Runs in foreground or as a daemon (using external software like ``start-stop-daemon``)
 - Dynamic event map switching
 - Adding and removing devices on-the-fly
 - Supported events:
@@ -47,7 +47,7 @@ Features
 Installation
 ------------
 
-`evmapy` is not currently available through `PyPI`_, so you'll need to handle it manually:
+*evmapy* is not currently available through `PyPI`_, so you'll need to handle it manually:
 
 ::
 
@@ -56,7 +56,7 @@ Installation
   cd evmapy
   python3 setup.py test
 
-**NOTE:** Commands for your favorite Linux distribution may be a bit different, e.g. you might have to use `pip3` instead of `pip` etc.
+**NOTE:** Commands for your favorite Linux distribution may be a bit different, e.g. you might have to use ``pip3`` instead of ``pip`` etc.
 
 If you get any errors from running the last command (and you're positive you're running Python 3.3+), please let me know.
 
@@ -73,7 +73,7 @@ If you decide to install it in your system, run:
   python3 setup.py install
 
 
-and it will be available simply as `evmapy`.
+and it will be available simply as *evmapy*.
 
 Crash course
 ------------
@@ -95,48 +95,48 @@ Crash course
   /dev/input/event3: loaded /root/.evmapy/Logitech.Logitech.Cordless.RumblePad.2.json
   handling 1 device(s)
 
-**NOTE:** `evmapy` doesn't need to be run with root privileges as long as the user you're running it as is allowed to both read from `/dev/input/eventX` and write to `/dev/uinput`. However, running it as root for testing purposes is a good way to make sure you're not facing a permissions-related issue.
+**NOTE:** *evmapy* doesn't need to be run with root privileges as long as the user you're running it as is allowed to both read from ``/dev/input/eventX`` and write to ``/dev/uinput``. However, running it as root for testing purposes is a good way to make sure you're not facing a permissions-related issue.
 
-**NOTE:** Use `python3 -m evmapy` instead of `evmapy` if you haven't installed the package in your system yet.
+**NOTE:** Use ``python3 -m evmapy`` instead of ``evmapy`` if you haven't installed the package in your system yet.
 
 If all goes well, pressing any button on your input device will cause the default name of that button to be printed to the console.
 
 Configuration
 -------------
 
-Event maps are read from JSON files. You can generate an example configuration file automatically using the `--configure DEVICE_PATH` command line switch. Each configuration file is a representation of an object with the following properties:
+Event maps are read from JSON files. You can generate an example configuration file automatically using the ``--configure DEVICE_PATH`` command line switch. Each configuration file is a representation of an object with the following properties:
 
-- `axes`: list of input device axes `evmapy` will monitor, each of which must have exactly 2 actions assigned:
+- *axes*: list of input device axes *evmapy* will monitor, each of which must have exactly 2 actions assigned:
 
-  - `min`: performed when the value of this axis is the lowest possible one,
-  - `max`: performed when the value of this axis is the highest possible one,
+  - *min*: performed when the value of this axis is the lowest possible one,
+  - *max*: performed when the value of this axis is the highest possible one,
 
-- `buttons`: list of input device keys/buttons `evmapy` will monitor, each of which must have only a single `press` action assigned,
-- `grab`: set it to `True` if you want `evmapy` to become the only recipient of the events emitted by this input device.
+- *buttons*: list of input device keys/buttons *evmapy* will monitor, each of which must have only a single *press* action assigned,
+- *grab*: set it to ``True`` if you want *evmapy* to become the only recipient of the events emitted by this input device.
 
 **NOTE:** Don't forget that a typical analog stick on a joypad consists of 2 axes (horizontal and vertical)!
 
 Each action has 3 parameters you can set (don't touch the rest unless you know what you're doing):
 
-- `type`:
+- *type*:
 
-  - `key`: event will be translated to a key press,
-  - `exec`: event will cause an external program to be executed,
+  - *key*: event will be translated to a key press,
+  - *exec*: event will cause an external program to be executed,
 
-- `target`:
+- *target*:
 
-  - if `type` is `key`: the key(s) to "press" (see `/usr/include/linux/input.h` for a list of valid values),
-  - if `type` is `exec`: the command(s) to run,
+  - if *type* is *key*: the key(s) to "press" (see ``/usr/include/linux/input.h`` for a list of valid values),
+  - if *type* is *exec*: the command(s) to run,
 
-- `trigger`:
+- *trigger*:
 
-  - `normal`: action will be performed immediately,
-  - `long`: action will only be performed once the event has been active for 1 second (i.e. you keep a key/button pressed or an analog stick tilted for that long).
+  - *normal*: action will be performed immediately,
+  - *long*: action will only be performed once the event has been active for 1 second (i.e. you keep a key/button pressed or an analog stick tilted for that long).
 
 Each axis and button has 2 more properties:
 
-- `alias`: set it to whatever you want to (stay JSON compliant, though!),
-- `code`: don't touch it (`evmapy` relies on it for proper functioning).
+- *alias*: set it to whatever you want to (stay JSON compliant, though!),
+- *code*: don't touch it (*evmapy* relies on it for proper functioning).
 
 If all this sounds too complicated, here are some examples to clear things up:
 
@@ -180,7 +180,7 @@ How do I...
 
 - *...change the event map for a given device?*
 
-  Each handled input device is associated with a Unix domain socket created in `/tmp`. If you want to change a configuration of any handled device, send the name of the configuration file you want to load to its Unix domain socket (you can use `socat` for this). The configuration file supplied has to exist in `~/.evmapy`. Send an empty name to restore default configuration for a given device.
+  Each handled input device is associated with a Unix domain socket created in ``/tmp``. If you want to change a configuration of any handled device, send the name of the configuration file you want to load to its Unix domain socket (you can use ``socat`` for this). The configuration file supplied has to exist in ``~/.evmapy``. Send an empty name to restore default configuration for a given device.
 
   ::
 
@@ -191,9 +191,9 @@ How do I...
 
 - *...rescan available devices?*
 
-  Send a *SIGHUP* signal to `evmapy`.
+  Send a *SIGHUP* signal to *evmapy*.
 
-  **HINT:** You can automatically signal `evmapy` when a new input device is plugged in using a udev rule similar to the following:
+  **HINT:** You can automatically signal *evmapy* when a new input device is plugged in using a udev rule similar to the following:
 
   ::
 
@@ -205,23 +205,23 @@ How do I...
 
 - *...diagnose why the application doesn't react to events the way I want it to?*
 
-  You can try running it with the `--debug` command line switch. This will cause `evmapy` to print information about every event received from any handled input device. If you see the events coming, but the actions you expect aren't performed, double-check your configuration first and if this doesn't help, feel free to contact me.
+  You can try running it with the ``--debug`` command line switch. This will cause *evmapy* to print information about every event received from any handled input device. If you see the events coming, but the actions you expect aren't performed, double-check your configuration first and if this doesn't help, feel free to contact me.
 
 - *...run it as a daemon?*
 
-  I wanted to keep the source code as clean as possible and to avoid depending on third party Python modules which aren't absolutely necessary, so there is no "daemon mode" implementation *per se* in `evmapy`. Instead, please use the relevant tools available in your favorite distribution, like `start-stop-daemon`:
+  I wanted to keep the source code as clean as possible and to avoid depending on third party Python modules which aren't absolutely necessary, so there is no "daemon mode" implementation *per se* in *evmapy*. Instead, please use the relevant tools available in your favorite distribution, like ``start-stop-daemon``:
 
   ::
 
     start-stop-daemon --start --background --pidfile /run/evmapy.pid --make-pidfile --exec /usr/bin/evmapy
     start-stop-daemon --stop --pidfile /run/evmapy.pid --retry INT/5/KILL/5
 
-  When running in the background, `evmapy` will output its messages to syslog (`LOG_DAEMON` facility).
+  When running in the background, *evmapy* will output its messages to syslog (``LOG_DAEMON`` facility).
 
 Code maturity
 -------------
 
-`evmapy` is a young project and it hasn't been tested widely. While evdev and uinput are powerful mechanisms which put virtually no limits on their applications, `evmapy` was implemented to solve a specific problem, so you are likely to find it lacking in its current form. Unfortunately, I don't have enough spare time at the moment to turn it into a full-blown project. I decided to publish it nevertheless as it may scratch your itch as well as it did mine and if it doesn't, you are free to modify it for your own needs.
+*evmapy* is a young project and it hasn't been tested widely. While evdev and uinput are powerful mechanisms which put virtually no limits on their applications, *evmapy* was implemented to solve a specific problem, so you are likely to find it lacking in its current form. Unfortunately, I don't have enough spare time at the moment to turn it into a full-blown project. I decided to publish it nevertheless as it may scratch your itch as well as it did mine and if it doesn't, you are free to modify it for your own needs.
 
 Coding principles
 -----------------
@@ -238,12 +238,12 @@ A while ago, I felt a sudden urge to play a bunch of old games on a TV, using a 
 
 Fast forward a few years, I started using a joypad to control `Kodi`_, a cross-platform media center solution. While this combo was working great *after* the application was already launched, it got me thinking: how do I launch Kodi, or any program for that matter, using just the joypad? I haven't found a single solution to that problem, which surprised me as, thanks to evdev, it is trivially easy to receive input events generated by the joypad in user space.
 
-This adversity reminded me of the other joypad issues I had faced in the past and I got frustrated that I can't just easily use the joypad the way I want. That frustration became the motivation for creating `evmapy`.
+This adversity reminded me of the other joypad issues I had faced in the past and I got frustrated that I can't just easily use the joypad the way I want. That frustration became the motivation for creating *evmapy*.
 
 License
 -------
 
-`evmapy` is released under the `GPLv2`_.
+*evmapy* is released under the `GPLv2`_.
 
 .. _Python: https://www.python.org/
 .. _python-evdev: http://python-evdev.readthedocs.org/en/latest/
