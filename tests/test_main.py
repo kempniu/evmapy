@@ -24,6 +24,7 @@ Unit tests for the __main__ module
 import io
 import logging
 import logging.handlers
+import socket
 import unittest
 import unittest.mock
 
@@ -37,6 +38,7 @@ class TestLogging(unittest.TestCase):
     Test initialize_logging()
     """
 
+    @unittest.mock.patch.object(socket.socket, 'connect')
     @unittest.mock.patch('sys.stdout')
     @unittest.mock.patch('os.isatty')
     def check_logging(self, *args):
@@ -44,7 +46,7 @@ class TestLogging(unittest.TestCase):
         Call initialize_logging() with supplied arguments and check
         properties of the returned Logger object
         """
-        (params, fake_isatty, _) = args
+        (params, fake_isatty, *_) = args
         fake_isatty.return_value = params['foreground']
         logger = evmapy.__main__.initialize_logging('foo', params['debug'])
         self.assertEqual(logger.getEffectiveLevel(), params['level'])
