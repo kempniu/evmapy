@@ -23,7 +23,6 @@ Various helper functions used by other modules
 
 import os
 import pwd
-import re
 
 
 def as_list(var):
@@ -66,17 +65,3 @@ def get_app_info():
     }
     info['config_dir'] = os.path.join(info['user'].pw_dir, '.' + info['name'])
     return info
-
-
-def get_device_config_path(device):
-    """
-    Return the path to the configuration file for the given input device.
-
-    :param device: input device to get the configuration file path for
-    :type device: :py:class:`evdev.InputDevice`
-    :returns: path to the configuration file for the given input device
-    :rtype: str
-    """
-    info = get_app_info()
-    config_filename = re.sub(r'[^\w]', '.', device.name) + '.json'
-    return os.path.join(info['config_dir'], config_filename)

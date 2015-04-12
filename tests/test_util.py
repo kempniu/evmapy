@@ -63,13 +63,3 @@ class TestUtil(unittest.TestCase):
         self.assertIsInstance(info['version'], str)
         self.assertIsInstance(info['user'], pwd.struct_passwd)
         self.assertIsInstance(info['config_dir'], str)
-
-    @unittest.mock.patch('evdev.InputDevice')
-    def test_util_device_config_path(self, fake_inputdevice):
-        """
-        Test get_device_config_path()
-        """
-        fake_inputdevice.return_value.name = 'Foo Bar'
-        device = fake_inputdevice()
-        retval = evmapy.util.get_device_config_path(device)
-        self.assertTrue(retval.endswith('/Foo.Bar.json'))

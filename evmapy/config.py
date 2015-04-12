@@ -22,11 +22,53 @@ Functions handling configuration generation, saving and loading
 """
 
 import json
+import logging
 import os
+import re
 
 import evdev
 
 import evmapy.util
+
+
+class ConfigError(Exception):
+
+    """
+    Exception thrown when an error occurs when trying to load a device
+    configuration file
+    """
+
+    def __init__(self, path, reason):
+        super().__init__()
+        self.path = path
+        self.not_found = False
+        if isinstance(reason, ValueError):
+            self.error = "Invalid JSON file: %s" % str(reason)
+        elif isinstance(reason, FileNotFoundError):
+            self.error = "File not found"
+            self.not_found = True
+        else:
+            self.error = str(reason)
+
+    def __str__(self):
+        return "%s: %s" % (self.path, self.error)
+
+
+def _get_device_config_path(device):
+    """
+    Return the path to the default configuration file for the given
+    input device.
+
+    :param device: input device to get the default configuration file
+        path for
+    :type device: :py:class:`evdev.InputDevice`
+    :returns: path to the default configuration file for the given input
+        device
+    :rtype: str
+    """
+    info = evmapy.util.get_app_info()
+    config_filename = re.sub(r'[^\w]', '.', device.name) + '.json'
+    return os.path.join(info['config_dir'], config_filename)
 
 
 def create(dev_path):
@@ -43,7 +85,7 @@ def create(dev_path):
         device = evdev.InputDevice(dev_path)
     except FileNotFoundError:
         return "No such device %s" % dev_path
-    config_path = evmapy.util.get_device_config_path(device)
+    config_path = _get_device_config_path(device)
     if os.path.exists(config_path):
         return "%s already exists, not overwriting" % config_path
     config = generate(device)
@@ -118,34 +160,76 @@ def save(path, config):
         json.dump(config, config_file, indent=4, sort_keys=True)
 
 
-def load(path):
+def load(device, name):
     """
-    Load device configuration from the file provided.
+    Load configuration for the given device.
 
-    :param path: path to load configuration from
+    :param device: device to load configuration for
+    :type device: :py:class:`evdev.InputDevice`
+    :param name: name of the configuration file to load (`None` and `''`
+        cause the default configuration file to be used)
+    :type name: str
+    :returns: event map generated from the loaded configuration file
+    :rtype: dict
+    :raises ConfigError: if an error occurred while loading the
+        specified configuration file
+    """
+    if name:
+        info = evmapy.util.get_app_info()
+        path = os.path.join(info['config_dir'], os.path.basename(name))
+    else:
+        path = _get_device_config_path(device)
+    try:
+        config = read(path)
+        eventmap = parse(config)
+    except Exception as exc:
+        raise ConfigError(path, exc)
+    logging.getLogger().info("%s: loaded %s", device.fn, path)
+    return eventmap
+
+
+def read(path):
+    """
+    Read configuration file under the given path and return the
+    dictionary it represents.
+
+    :param path: path to the file to read
     :type path: str
-    :returns: event map generated from the loaded configuration
+    :returns: configuration dictionary represented by the given file
     :rtype: dict
     """
-    retval = {}
+    with open(path) as config_file:
+        config = json.load(config_file)
+    return config
+
+
+def parse(config):
+    """
+    Transform the given configuration dictionary into an event map.
+
+    :param config: configuration dictionary to process
+    :type config: dict
+    :returns: event map generated from the given configuration
+        dictionary
+    :rtype: dict
+    """
+    eventmap = {}
     # Every action needs a unique identifier in order for the event
     # multiplexer to be able to remove it from the list of delayed
     # actions; note that we can't directly compare the dictionaries as
     # there may be identical actions configured for two different events
     current_id = 0
-    with open(path) as config_file:
-        config = json.load(config_file)
-    retval['grab'] = config['grab']
+    eventmap['grab'] = config['grab']
     # Transform lists into an event map keyed by event ID
     for button in config['buttons']:
         button['press']['id'] = current_id
         current_id += 1
-        retval[button['code']] = button
+        eventmap[button['code']] = button
     for axis in config['axes']:
         for limit in ('min', 'max'):
             axis[limit]['id'] = current_id
             # Needed for proper handling of axis hysteresis
             axis[limit]['state'] = 'up'
             current_id += 1
-        retval[axis['code']] = axis
-    return retval
+        eventmap[axis['code']] = axis
+    return eventmap

@@ -77,13 +77,14 @@ class TestConfig(unittest.TestCase):
         """
         self.assertIsNotNone(evmapy.config.create('/foo/bar'))
 
-    @unittest.mock.patch('evmapy.util.get_device_config_path')
+    @unittest.mock.patch('os.path.exists')
     @unittest.mock.patch('evdev.InputDevice')
-    def test_config_create_overwrite(self, _, fake_config_path):
+    def test_config_create_overwrite(self, fake_device, fake_exists):
         """
         Test create() with a configuration file path that already exists
         """
-        fake_config_path.return_value = '/'
+        fake_device.return_value.name = 'Foo Bar'
+        fake_exists.return_value = True
         self.assertIsNotNone(evmapy.config.create('/dev/input/event0'))
 
     @unittest.mock.patch('evmapy.config.save')
@@ -142,14 +143,60 @@ class TestConfig(unittest.TestCase):
         fake_mkdir.assert_called_once_with(info['config_dir'])
         self.assertDictEqual(FAKE_CONFIG, config)
 
-    def test_config_load(self):
+    @unittest.mock.patch('evmapy.config.read')
+    def check_load_error(self, *args):
         """
-        Test load()
+        Test load() with an explicit configuration file name, raising
+        the given exception when read() is called
         """
-        with tempfile.NamedTemporaryFile(mode='w+') as temp:
-            json.dump(FAKE_CONFIG, temp)
-            temp.seek(0)
-            eventmap = evmapy.config.load(temp.name)
+        (error, fake_read) = args
+        fake_read.side_effect = error
+        with self.assertRaises(evmapy.config.ConfigError):
+            evmapy.config.load(None, 'Foo.Bar.json')
+
+    def test_config_load_not_found(self):
+        """
+        Check load() behavior when a FileNotFoundError is raised by
+        read()
+        """
+        self.check_load_error(FileNotFoundError())
+
+    def test_config_load_bad_json(self):
+        """
+        Check load() behavior when a ValueError is raised by read()
+        """
+        self.check_load_error(ValueError())
+
+    def test_config_load_error(self):
+        """
+        Check load() behavior when any other exception is raised by
+        read()
+        """
+        self.check_load_error(Exception())
+
+    @unittest.mock.patch('logging.getLogger')
+    @unittest.mock.patch('evmapy.config.read')
+    def test_config_load_relative(self, fake_read, _):
+        """
+        Check if load() properly sanitizes the provided file name
+        """
+        evmapy.config.load(unittest.mock.Mock(), '../foo.json')
+        read_arg = fake_read.call_args[0][0]
+        with self.assertRaises(ValueError):
+            read_arg.index('..')
+
+    @unittest.mock.patch('logging.getLogger')
+    def test_config_load_ok(self, _):
+        """
+        Test load() with a valid, default configuration file
+        """
+        fake_config_json = json.dumps(FAKE_CONFIG)
+        fake_open = unittest.mock.mock_open(read_data=fake_config_json)
+        fake_device = unittest.mock.Mock()
+        fake_device.name = 'Foo Bar'
+        fake_device.fn = '/dev/input/event0'
+        with unittest.mock.patch('evmapy.config.open', fake_open, create=True):
+            eventmap = evmapy.config.load(fake_device, None)
         self.assertSetEqual(set(eventmap.keys()), set([1, 2, 'grab']))
         ids = [
             eventmap[1]['min']['id'],

@@ -130,13 +130,14 @@ class EventMultiplexer(object):
         """
         device = evdev.InputDevice(path)
         self._logger.debug("trying to add %s (%s)", device.fn, device.name)
-        config_path = evmapy.util.get_device_config_path(device)
-        if not os.path.exists(config_path):
-            return
-        source = evmapy.source.EventSource(device, config_path)
-        for fdesc in source.fds.values():
-            self._fds[fdesc] = source
-            self._poll.register(fdesc, select.POLLIN)
+        try:
+            source = evmapy.source.EventSource(device)
+            for fdesc in source.fds.values():
+                self._fds[fdesc] = source
+                self._poll.register(fdesc, select.POLLIN)
+        except evmapy.config.ConfigError as exc:
+            if not exc.not_found:
+                self._logger.error(str(exc))
 
     def _remove_device(self, source, quiet=False):
         """

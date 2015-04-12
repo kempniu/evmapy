@@ -26,6 +26,7 @@ import unittest.mock
 
 import evdev
 
+import evmapy.config
 import evmapy.source
 import evmapy.util
 
@@ -87,7 +88,7 @@ def mock_eventsource(*args):
         'device':   device,
         'logger':   fake_logger.return_value,
         'socket':   fake_socket.return_value,
-        'source':   evmapy.source.EventSource(device, '/foo.json'),
+        'source':   evmapy.source.EventSource(device),
     }
 
 
@@ -144,25 +145,14 @@ class TestSource(unittest.TestCase):
         self.assertEqual(expected_list, [])
 
     @unittest.mock.patch('evmapy.config.load')
-    def test_source_config_load_file(self, fake_config_load):
-        """
-        Check if EventSource tries to load the proper configuration file
-        when requested to
-        """
-        info = evmapy.util.get_app_info()
-        config_path = info['config_dir'] + '/bar.json'
-        self.socket.recv.return_value = b'bar.json\n'
-        self.source.process(tests.util.CONFIG_FD)
-        fake_config_load.assert_called_once_with(config_path)
-
-    @unittest.mock.patch('evmapy.config.load')
     def test_source_config_load_invalid(self, fake_config_load):
         """
-        Check how EventSource behaves when asked to load a non-existent
+        Check how EventSource behaves when asked to load an invalid
         configuration file
         """
         self.socket.recv.return_value = b'bar.json\n'
-        fake_config_load.side_effect = FileNotFoundError()
+        fake_error = evmapy.config.ConfigError('/foo.json', ValueError())
+        fake_config_load.side_effect = fake_error
         self.source.process(tests.util.CONFIG_FD)
         self.assertEqual(self.logger.error.call_count, 1)
 
@@ -174,8 +164,7 @@ class TestSource(unittest.TestCase):
         """
         self.socket.recv.return_value = b'\n'
         self.source.process(tests.util.CONFIG_FD)
-        config_path = evmapy.util.get_device_config_path(self.device)
-        fake_config_load.assert_called_once_with(config_path)
+        fake_config_load.assert_called_once_with(self.device, '')
 
     @unittest.mock.patch('evmapy.config.load')
     def test_source_config_load_grab(self, fake_config_load):

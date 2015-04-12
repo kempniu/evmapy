@@ -42,7 +42,7 @@ class EventSource(object):
     new configuration filename to a Unix domain socket.
     """
 
-    def __init__(self, device, config_path):
+    def __init__(self, device):
         self.device = {
             'name': device.name,
             'path': device.fn,
@@ -51,7 +51,7 @@ class EventSource(object):
         self._eventmap = {}
         self._grabbed = False
         self._logger = logging.getLogger()
-        self._load_config(config_path)
+        self._load_config()
         config_socket_path = '/tmp/%s-%s-%s' % (
             evmapy.util.get_app_info()['name'],
             re.sub(r'[^\w]', '-', device.fn),
@@ -68,16 +68,18 @@ class EventSource(object):
             'socket':   config_socket,
         }
 
-    def _load_config(self, path):
+    def _load_config(self, name=None):
         """
         Load configuration from the given path.
 
-        :param path: path to load configuration from
-        :type path: str
+        :param name: name of the configuration file to load (`None`
+            and `''` cause the default configuration file to be used)
+        :type name: str
         :returns: None
+        :raises evmapy.config.ConfigError: if an error occurred while
+            loading the specified configuration file
         """
-        self._eventmap = evmapy.config.load(path)
-        self._logger.info("%s: loaded %s", self.device['path'], path)
+        self._eventmap = evmapy.config.load(self._device, name)
         if self._eventmap['grab'] is True and self._grabbed is False:
             self._device.grab()
             self._grabbed = True
@@ -161,21 +163,13 @@ class EventSource(object):
             performed)
         :rtype: list
         """
-        info = evmapy.util.get_app_info()
         config_name = self._config['socket'].recv(256).decode().strip()
-        config_path = os.path.join(info['config_dir'], config_name)
-        if config_name:
-            try:
-                self._load_config(config_path)
-            except FileNotFoundError:
-                self._logger.error(
-                    "%s: no such configuration file: %s",
-                    self.device['path'], config_path
-                )
-        else:
-            # Reload default configuration
-            config_path = evmapy.util.get_device_config_path(self._device)
-            self._load_config(config_path)
+        try:
+            self._load_config(config_name)
+        except evmapy.config.ConfigError as exc:
+            self._logger.error(
+                "%s: failed to load %s", self.device['path'], str(exc)
+            )
         return []
 
     def cleanup(self):
