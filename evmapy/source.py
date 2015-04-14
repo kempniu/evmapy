@@ -22,9 +22,6 @@
 """
 
 import logging
-import os
-import re
-import socket
 
 import evdev
 
@@ -37,13 +34,12 @@ class Source(object):
     """
     Class encapsulating an :py:class:`evdev.InputDevice` instance which
     translates the events emitted by it to a list of actions to be
-    performed by a :py:class:`evmapy.multiplexer.Multiplexer`. The
-    event-to-action mappings can be dynamically changed by writing the
-    new configuration filename to a Unix domain socket.
+    performed by a :py:class:`evmapy.multiplexer.Multiplexer`.
     """
 
     def __init__(self, device):
         self.device = {
+            'fd':   device.fd,
             'name': device.name,
             'path': device.fn,
         }
@@ -51,24 +47,9 @@ class Source(object):
         self._eventmap = {}
         self._grabbed = False
         self._logger = logging.getLogger()
-        self._load_config()
-        config_socket_path = '/tmp/%s-%s-%s' % (
-            evmapy.util.get_app_info()['name'],
-            re.sub(r'[^\w]', '-', device.fn),
-            re.sub(r'[^\w]', '-', device.name)
-        )
-        config_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
-        config_socket.bind(config_socket_path)
-        self.fds = {
-            'config':   config_socket.fileno(),
-            'device':   device.fd,
-        }
-        self._config = {
-            'path':     config_socket_path,
-            'socket':   config_socket,
-        }
+        self.load_config()
 
-    def _load_config(self, name=None):
+    def load_config(self, name=None):
         """
         Load configuration from the given path.
 
@@ -89,23 +70,7 @@ class Source(object):
             self._grabbed = False
             self._logger.info("%s: device ungrabbed", self.device['path'])
 
-    def process(self, fileno):
-        """
-        Process pending input events or configuration request, depending
-        on which file descriptor was provided.
-
-        :param fileno: file descriptor to process
-        :type fileno: int
-        :returns: list of actions to be performed
-        :rtype: list
-        """
-        if fileno == self.fds['device']:
-            return self._process_input_events()
-        elif fileno == self.fds['config']:
-            return self._process_config_request()
-
-    def _process_input_events(self):
-
+    def process(self):
         """
         Translate input events into actions to be performed.
 
@@ -153,31 +118,3 @@ class Source(object):
                             _perform_axis_action(limit, 'up')
 
         return pending
-
-    def _process_config_request(self):
-        """
-        Reload configuration from the file name written to the
-        configuration socket.
-
-        :returns: an empty list (to signal that no actions should be
-            performed)
-        :rtype: list
-        """
-        config_name = self._config['socket'].recv(256).decode().strip()
-        try:
-            self._load_config(config_name)
-        except evmapy.config.ConfigError as exc:
-            self._logger.error(
-                "%s: failed to load %s", self.device['path'], str(exc)
-            )
-        return []
-
-    def cleanup(self):
-        """
-        Close the configuration socket and remove it from the
-        filesystem.
-
-        :returns: None
-        """
-        self._config['socket'].close()
-        os.remove(self._config['path'])

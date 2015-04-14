@@ -35,13 +35,12 @@ import tests.util
 
 @unittest.mock.patch('evmapy.config.load')
 @unittest.mock.patch('logging.getLogger')
-@unittest.mock.patch('socket.socket')
 @unittest.mock.patch('evdev.InputDevice')
 def mock_source(*args):
     """
     Generate a Source with mocked attributes
     """
-    (fake_inputdevice, fake_socket, fake_logger, fake_config_load) = args
+    (fake_inputdevice, fake_logger, fake_config_load) = args
     fake_eventmap = {
         100: {
             'alias':    'Foo',
@@ -81,13 +80,11 @@ def mock_source(*args):
         'fd':   tests.util.DEVICE_FD,
     }
     tests.util.set_attrs_from_dict(fake_inputdevice.return_value, device_attrs)
-    fake_socket.return_value.fileno.return_value = tests.util.CONFIG_FD
     fake_config_load.return_value = fake_eventmap
     device = fake_inputdevice()
     return {
         'device':   device,
         'logger':   fake_logger.return_value,
-        'socket':   fake_socket.return_value,
         'source':   evmapy.source.Source(device),
     }
 
@@ -104,7 +101,6 @@ class TestSource(unittest.TestCase):
         """
         self.device = None
         self.logger = None
-        self.socket = None
         self.source = None
         tests.util.set_attrs_from_dict(self, mock_source())
 
@@ -138,36 +134,14 @@ class TestSource(unittest.TestCase):
             fake_event = evdev.events.InputEvent(0, 0, ecode, etype, evalue)
             fake_events.append(fake_event)
         self.device.read.return_value = fake_events
-        actions = self.source.process(tests.util.DEVICE_FD)
+        actions = self.source.process()
         for (action, direction) in actions:
             expected = expected_list.pop(0)
             self.assertTupleEqual((action['target'], direction), expected)
         self.assertEqual(expected_list, [])
 
     @unittest.mock.patch('evmapy.config.load')
-    def test_source_config_load_invalid(self, fake_config_load):
-        """
-        Check how Source behaves when asked to load an invalid
-        configuration file
-        """
-        self.socket.recv.return_value = b'bar.json\n'
-        fake_error = evmapy.config.ConfigError('/foo.json', ValueError())
-        fake_config_load.side_effect = fake_error
-        self.source.process(tests.util.CONFIG_FD)
-        self.assertEqual(self.logger.error.call_count, 1)
-
-    @unittest.mock.patch('evmapy.config.load')
-    def test_source_config_load_default(self, fake_config_load):
-        """
-        Check how Source behaves when asked to reload the default
-        configuration file
-        """
-        self.socket.recv.return_value = b'\n'
-        self.source.process(tests.util.CONFIG_FD)
-        fake_config_load.assert_called_once_with(self.device, '')
-
-    @unittest.mock.patch('evmapy.config.load')
-    def test_source_config_load_grab(self, fake_config_load):
+    def test_source_load_config_grab(self, fake_config_load):
         """
         Check if Source properly grabs its underlying device when
         requested to
@@ -176,12 +150,12 @@ class TestSource(unittest.TestCase):
             {'grab': False},
             {'grab': True},
         ]
-        self.source.process(tests.util.CONFIG_FD)
-        self.source.process(tests.util.CONFIG_FD)
+        self.source.load_config()
+        self.source.load_config()
         self.assertEqual(self.device.grab.call_count, 1)
 
     @unittest.mock.patch('evmapy.config.load')
-    def test_source_config_load_ungrab(self, fake_config_load):
+    def test_source_load_config_ungrab(self, fake_config_load):
         """
         Check if Source properly ungrabs its underlying device when
         requested to
@@ -190,15 +164,6 @@ class TestSource(unittest.TestCase):
             {'grab': True},
             {'grab': False},
         ]
-        self.source.process(tests.util.CONFIG_FD)
-        self.source.process(tests.util.CONFIG_FD)
+        self.source.load_config()
+        self.source.load_config()
         self.assertEqual(self.device.ungrab.call_count, 1)
-
-    @unittest.mock.patch('os.remove')
-    def test_source_cleanup(self, fake_remove):
-        """
-        Check if Source properly cleans up after itself
-        """
-        self.source.cleanup()
-        self.socket.close.assert_called_once_with()
-        self.assertEqual(fake_remove.call_count, 1)

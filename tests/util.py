@@ -21,7 +21,7 @@
 Constants and functions used by test modules
 """
 
-CONFIG_FD = 1
+CONTROL_FD = 1
 DEVICE_FD = 2
 
 

@@ -29,6 +29,7 @@ import time
 
 import evdev
 
+import evmapy.controller
 import evmapy.source
 import evmapy.util
 
@@ -57,13 +58,12 @@ class SIGHUPReceivedException(Exception):
 class Multiplexer(object):
 
     """
-    Class monitoring multiple file descriptors for incoming data. These
-    file descriptors are both evdev descriptors and Unix domain sockets
-    which enable :py:class:`evmapy.source.Source` instances to be
-    dynamically reconfigured.  Whenever any monitored descriptor is
-    ready for reading, it is passed to its associated
-    :py:class:`evmapy.source.Source` for processing. If the result of
-    this processing in an action list, these actions are then performed.
+    Class monitoring input device file descriptors and the control
+    socket for incoming data. Whenever any of these is ready for
+    reading, its associated object (:py:class:`evmapy.source.Source` or
+    :py:class:`evmapy.controller.Controller` instance, respectively) is
+    asked to process pending data. If the result of this processing in
+    an action list, these actions are then performed.
     """
 
     def __init__(self):
@@ -80,6 +80,10 @@ class Multiplexer(object):
             # Start processing events from all configured devices
             self._poll = select.poll()
             self._scan_devices()
+            # Open control socket and start monitoring it
+            self._controller = evmapy.controller.Controller(self)
+            self._fds[self._controller.fileno()] = self._controller
+            self._poll.register(self._controller, select.POLLIN)
         except:
             self._logger.exception("unhandled exception while initializing:")
             raise
@@ -92,9 +96,13 @@ class Multiplexer(object):
 
         :returns: list of handled :py:class:`evmapy.source.Source`
             instances
-        :rtype: set
+        :rtype: list
         """
-        return set(self._fds.values())
+        retval = []
+        for processor in self._fds.values():
+            if getattr(processor, 'device', 'socket') != 'socket':
+                retval.append(processor)
+        return retval
 
     def _log_device_count(self):
         """
@@ -131,9 +139,8 @@ class Multiplexer(object):
         self._logger.debug("trying to add %s (%s)", device.fn, device.name)
         try:
             source = evmapy.source.Source(device)
-            for fdesc in source.fds.values():
-                self._fds[fdesc] = source
-                self._poll.register(fdesc, select.POLLIN)
+            self._fds[source.device['fd']] = source
+            self._poll.register(source.device['fd'], select.POLLIN)
         except evmapy.config.ConfigError as exc:
             if not exc.not_found:
                 self._logger.error(str(exc))
@@ -149,10 +156,8 @@ class Multiplexer(object):
         :type quiet: bool
         :returns: None
         """
-        for fdesc in source.fds.values():
-            del self._fds[fdesc]
-            self._poll.unregister(fdesc)
-        source.cleanup()
+        del self._fds[source.device['fd']]
+        self._poll.unregister(source.device['fd'])
         if not quiet:
             self._logger.info("removed %(path)s (%(name)s)", source.device)
             self._log_device_count()
@@ -173,7 +178,10 @@ class Multiplexer(object):
             raise
         finally:
             # Always cleanup, even if an unhandled exception was raised
-            for source in set(self._fds.values()):
+            del self._fds[self._controller.fileno()]
+            self._poll.unregister(self._controller)
+            self._controller.cleanup()
+            for source in self.devices:
                 self._remove_device(source, quiet=True)
             self._uinput.close()
             self._logger.info("quitting")
@@ -213,13 +221,11 @@ class Multiplexer(object):
                 continue
             for (fdesc, _) in results:
                 try:
-                    source = self._fds[fdesc]
-                    actions = source.process(fdesc)
+                    processor = self._fds[fdesc]
+                    actions = processor.process()
                 except OSError:
-                    self._remove_device(source)
+                    self._remove_device(processor)
                     continue
-                # source.process() called with a configuration
-                # descriptor should always return None
                 if actions:
                     self._perform_normal_actions(actions)
             if not results:
