@@ -171,8 +171,8 @@ def load(device, name):
     :type name: str
     :returns: event map generated from the loaded configuration file
     :rtype: dict
-    :raises ConfigError: if an error occurred while loading the
-        specified configuration file
+    :raises evmapy.config.ConfigError: if an error occurred while
+        loading the specified configuration file
     """
     if name:
         info = evmapy.util.get_app_info()

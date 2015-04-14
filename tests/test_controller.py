@@ -123,6 +123,35 @@ class TestController(unittest.TestCase):
         self.check_controller_process(request)
         self.assertEqual(self.logger.error.call_count, 1)
 
+    def test_controller_config_file(self):
+        """
+        Check control command "config" with an explicit configuration
+        file name
+        """
+        request = {
+            'command':  'config',
+            'device':   '/dev/input/event0',
+            'file':     'foo.json',
+        }
+        self.check_controller_process(request)
+        self.target.load_device_config.assert_called_once_with(
+            request['device'], request['file']
+        )
+
+    def test_controller_config_default(self):
+        """
+        Check control command "config" with the default configuration
+        file name
+        """
+        request = {
+            'command':  'config',
+            'device':   '/dev/input/event0',
+        }
+        self.check_controller_process(request)
+        self.target.load_device_config.assert_called_once_with(
+            request['device'], None
+        )
+
     @unittest.mock.patch('os.remove')
     def test_controller_cleanup(self, fake_remove):
         """

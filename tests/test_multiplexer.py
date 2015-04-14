@@ -128,6 +128,7 @@ class TestMultiplexer(unittest.TestCase):
         fake_list.return_value = ['/dev/input/event0']
         if source:
             source.return_value.device = {
+                'path': '/dev/input/event0',
                 'fd':   tests.util.DEVICE_FD,
             }
             fake_rescan = evmapy.multiplexer.SIGHUPReceivedException()
@@ -283,3 +284,21 @@ class TestMultiplexer(unittest.TestCase):
         poll_device = (True, True)
         fake_system = self.multiplexer_check_action(action, poll_device)
         self.assertFalse(fake_system.called)
+
+    @unittest.mock.patch('evmapy.source.Source')
+    def test_multiplexer_device_config(self, fake_source):
+        """
+        Ensure load_device_config() handles exceptions nicely
+        """
+        def fake_do_config():
+            """
+            Simulate a load_device_config() call
+            """
+            self.multiplexer.load_device_config(
+                '/dev/input/event0', 'foo.json'
+            )
+        self.controller.process.side_effect = fake_do_config
+        fake_error = evmapy.config.ConfigError('/foo.json', ValueError())
+        fake_source.return_value.load_config.side_effect = fake_error
+        self.multiplexer_loop([CONTROL_POLL_EVENT], fake_source)
+        self.assertEqual(self.logger.error.call_count, 1)

@@ -29,6 +29,7 @@ import time
 
 import evdev
 
+import evmapy.config
 import evmapy.controller
 import evmapy.source
 import evmapy.util
@@ -311,3 +312,27 @@ class Multiplexer(object):
             ecode = evdev.ecodes.ecodes['EV_KEY']
             etype = evdev.ecodes.ecodes[key]
             self._uinput.write(ecode, etype, int(press))
+
+    def load_device_config(self, dev_path, config_file):
+        """
+        Loads configuration for the :py:class:`evmapy.source.Source`
+        instance associated with the device under the given path from
+        the configuration file with the given name.
+
+        :param dev_path: path to the device which the
+            :py:class:`evmapy.source.Source` to be configured is
+            associated with
+        :type dev_path: str
+        :param config_file: name of the configuration file to load
+        :type config_file: str
+        :returns: None
+        """
+        for source in self.devices:
+            if source.device['path'] == dev_path:
+                try:
+                    source.load_config(config_file)
+                except evmapy.config.ConfigError as exc:
+                    self._logger.error(
+                        "%s: failed to load %s",
+                        source.device['path'], str(exc)
+                    )

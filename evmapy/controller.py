@@ -98,3 +98,18 @@ class Controller(object):
         """
         self._socket['socket'].close()
         os.remove(self._socket['path'])
+
+    def do_config(self, request):
+        """
+        Load configuration for the given input device from the specified
+        file.
+
+        :param request: request issued by peer
+        :type request: dict
+        :returns: None
+        """
+        try:
+            config_file = request['file']
+        except KeyError:
+            config_file = None
+        self._target.load_device_config(request['device'], config_file)
