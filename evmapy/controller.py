@@ -24,6 +24,7 @@
 import json
 import logging
 import os
+import select
 import socket
 import stat
 
@@ -43,15 +44,34 @@ def _get_control_socket_path():
 
 def send_request(request):
     """
-    Send the given request to the control socket.
+    Send the given request to the control socket and wait for a response
+    if desired.
 
     :param request: request to send
     :type request: dict
-    :returns: None
+    :returns: if desired, response to request
+    :rtype: None or dict
     """
-    client_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
-    request_data = json.dumps(request).encode()
-    client_socket.sendto(request_data, _get_control_socket_path())
+    info = evmapy.util.get_app_info()
+    client_socket_path = '/tmp/%s.%d.socket' % (info['name'], os.getpid())
+    try:
+        client_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+        client_socket.bind(client_socket_path)
+        os.chmod(client_socket_path, stat.S_IRUSR | stat.S_IWUSR |
+                 stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH)
+        request_data = json.dumps(request).encode()
+        client_socket.sendto(request_data, _get_control_socket_path())
+        if request['wait']:
+            (read_fds, _, _) = select.select([client_socket], [], [], 1.0)
+            if read_fds:
+                data = client_socket.recv(1024)
+                return json.loads(data.decode())
+            else:
+                exit("Timeout waiting for a response from %s" % info['name'])
+    except FileNotFoundError:
+        exit("%s is not running" % info['name'])
+    finally:
+        os.remove(client_socket_path)
 
 
 class Controller(object):

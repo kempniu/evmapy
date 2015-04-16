@@ -102,12 +102,32 @@ class TestMain(unittest.TestCase):
 
     @unittest.mock.patch('evdev.InputDevice')
     @unittest.mock.patch('evdev.list_devices')
-    def test_main_list(self, fake_list_devices, _, fake_stdout):
+    def test_main_list_all(self, fake_list_devices, _, fake_stdout):
         """
-        $ evmapy --list
+        $ evmapy --list-all
         """
         fake_devices = ['/dev/input/event%d' % i for i in range(0, 10)]
         fake_list_devices.return_value = fake_devices
+        evmapy.__main__.main(['--list-all'])
+        lines_printed = fake_stdout.getvalue().splitlines()
+        self.assertEqual(len(lines_printed), len(fake_devices))
+
+    @unittest.mock.patch('evmapy.controller.send_request')
+    def test_main_list(self, fake_send_request, fake_stdout):
+        """
+        $ evmapy --list
+        """
+        fake_devices = [
+            {
+                'name': 'Foo',
+                'path': '/dev/input/event0',
+            },
+            {
+                'name': 'Bar',
+                'path': '/dev/input/event1',
+            },
+        ]
+        fake_send_request.return_value = fake_devices
         evmapy.__main__.main(['--list'])
         lines_printed = fake_stdout.getvalue().splitlines()
         self.assertEqual(len(lines_printed), len(fake_devices))

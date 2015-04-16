@@ -193,6 +193,8 @@ class TestController(unittest.TestCase):
         self.assertEqual(fake_remove.call_count, 1)
 
 
+@unittest.mock.patch('os.remove')
+@unittest.mock.patch('os.chmod')
 @unittest.mock.patch('socket.socket')
 class TestSendRequest(unittest.TestCase):
 
@@ -200,16 +202,63 @@ class TestSendRequest(unittest.TestCase):
     Test send_request()
     """
 
-    def test_send_request(self, fake_socket):
+    def test_send_request_data(self, fake_socket, _, fake_remove):
         """
         Check if send_request() properly processes data passed to it
         """
         request = {
             'command':  'foo',
             'param':    'bar',
+            'wait':     False,
         }
         evmapy.controller.send_request(request.copy())
         self.assertEqual(fake_socket.call_count, 1)
         sent_data = fake_socket.return_value.sendto.call_args[0][0]
         sent = json.loads(sent_data.decode())
         self.assertDictEqual(request, sent)
+        self.assertEqual(fake_remove.call_count, 1)
+
+    @unittest.mock.patch('select.select')
+    def test_send_request_wait_ok(self, *args):
+        """
+        Check if send_request() properly processes received responses
+        """
+        (fake_select, fake_socket, _, fake_remove) = args
+        request = {
+            'wait': True,
+        }
+        fake_select.return_value = (fake_socket.return_value, None, None)
+        fake_socket.return_value.recv.return_value = b'{"foo": "bar"}'
+        result = evmapy.controller.send_request(request)
+        self.assertEqual(fake_socket.return_value.bind.call_count, 1)
+        self.assertDictEqual(result, {'foo': 'bar'})
+        self.assertEqual(fake_remove.call_count, 1)
+
+    @unittest.mock.patch('select.select')
+    def test_send_request_wait_timeout(self, *args):
+        """
+        Check if send_request() properly reacts to a timeout when
+        waiting for a response
+        """
+        (fake_select, _, _, fake_remove) = args
+        request = {
+            'wait': True,
+        }
+        fake_select.return_value = (None, None, None)
+        with self.assertRaises(SystemExit):
+            evmapy.controller.send_request(request)
+        self.assertEqual(fake_remove.call_count, 1)
+
+    def test_send_request_not_running(self, *args):
+        """
+        Check if send_request() properly reacts when evmapy is not
+        running
+        """
+        (fake_socket, _, fake_remove) = args
+        request = {
+            'wait': True,
+        }
+        fake_socket.return_value.sendto.side_effect = FileNotFoundError()
+        with self.assertRaises(SystemExit):
+            evmapy.controller.send_request(request)
+        self.assertEqual(fake_remove.call_count, 1)

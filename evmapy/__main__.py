@@ -74,8 +74,10 @@ def main(argv=sys.argv[1:]):
     info = evmapy.util.get_app_info()
     parser = argparse.ArgumentParser(prog=info['name'])
     group = parser.add_mutually_exclusive_group()
-    group.add_argument("--list", action='store_true',
+    group.add_argument("--list-all", action='store_true',
                        help="list available devices")
+    group.add_argument("--list", action='store_true',
+                       help="list currently handled devices")
     group.add_argument("--generate", metavar="DEVICE",
                        help="generate configuration for DEVICE")
     group.add_argument("--configure", metavar="DEVICE:FILE",
@@ -83,10 +85,17 @@ def main(argv=sys.argv[1:]):
     group.add_argument("--debug", action='store_true',
                        help="run in debug mode")
     args = parser.parse_args(argv)
-    if args.list:
+    if args.list_all:
         for dev_path in evdev.list_devices():
             device = evdev.InputDevice(dev_path)
             print("%s: %s" % (device.fn, device.name))
+    elif args.list:
+        devices = evmapy.controller.send_request({
+            'command':  'list',
+            'wait':     True,
+        })
+        for device in devices:
+            print("%(path)s: %(name)s" % device)
     elif args.generate:
         exit(evmapy.config.create(args.generate))
     elif args.configure:
@@ -98,6 +107,7 @@ def main(argv=sys.argv[1:]):
             'command':  'config',
             'device':   dev_path,
             'file':     config_file,
+            'wait':     False,
         })
     else:
         info = evmapy.util.get_app_info()

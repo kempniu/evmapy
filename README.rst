@@ -80,7 +80,7 @@ Crash course
 
 ::
 
-  # evmapy --list
+  # evmapy --list-all
   /dev/input/event0: Power Button
   /dev/input/event1: Power Button
   /dev/input/event2: Video Bus
