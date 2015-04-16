@@ -30,6 +30,30 @@ import stat
 import evmapy.util
 
 
+def _get_control_socket_path():
+    """
+    Return the path to the control socket.
+
+    :returns: path to the control socket
+    :rtype: str
+    """
+    info = evmapy.util.get_app_info()
+    return '/tmp/%s.socket' % info['name']
+
+
+def send_request(request):
+    """
+    Send the given request to the control socket.
+
+    :param request: request to send
+    :type request: dict
+    :returns: None
+    """
+    client_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+    request_data = json.dumps(request).encode()
+    client_socket.sendto(request_data, _get_control_socket_path())
+
+
 class Controller(object):
 
     """
@@ -41,15 +65,11 @@ class Controller(object):
     def __init__(self, target):
         self._logger = logging.getLogger()
         self._target = target
-        info = evmapy.util.get_app_info()
-        control_socket_path = '/tmp/%s.socket' % info['name']
+        control_socket_path = _get_control_socket_path()
         control_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
         control_socket.bind(control_socket_path)
         os.chmod(control_socket_path, stat.S_IRUSR | stat.S_IWUSR)
-        self._socket = {
-            'path':     control_socket_path,
-            'socket':   control_socket,
-        }
+        self._socket = control_socket
 
     def fileno(self):
         """
@@ -60,7 +80,7 @@ class Controller(object):
         :returns: control socket's file descriptor
         :rtype: int
         """
-        return self._socket['socket'].fileno()
+        return self._socket.fileno()
 
     def process(self):
         """
@@ -71,7 +91,7 @@ class Controller(object):
         :rtype: list
         """
         try:
-            data = self._socket['socket'].recv(1024)
+            data = self._socket.recv(1024)
             request = json.loads(data.decode())
             command = request['command']
             method = getattr(self, 'do_' + command)
@@ -96,8 +116,8 @@ class Controller(object):
 
         :returns: None
         """
-        self._socket['socket'].close()
-        os.remove(self._socket['path'])
+        self._socket.close()
+        os.remove(_get_control_socket_path())
 
     def do_config(self, request):
         """

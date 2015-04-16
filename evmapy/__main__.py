@@ -29,6 +29,7 @@ import sys
 
 import evdev
 
+import evmapy.controller
 import evmapy.multiplexer
 import evmapy.util
 
@@ -75,8 +76,10 @@ def main(argv=sys.argv[1:]):
     group = parser.add_mutually_exclusive_group()
     group.add_argument("--list", action='store_true',
                        help="list available devices")
-    group.add_argument("--configure", metavar="DEVICE",
+    group.add_argument("--generate", metavar="DEVICE",
                        help="generate configuration for DEVICE")
+    group.add_argument("--configure", metavar="DEVICE:FILE",
+                       help="load DEVICE configuration from FILE")
     group.add_argument("--debug", action='store_true',
                        help="run in debug mode")
     args = parser.parse_args(argv)
@@ -84,8 +87,18 @@ def main(argv=sys.argv[1:]):
         for dev_path in evdev.list_devices():
             device = evdev.InputDevice(dev_path)
             print("%s: %s" % (device.fn, device.name))
+    elif args.generate:
+        exit(evmapy.config.create(args.generate))
     elif args.configure:
-        exit(evmapy.config.create(args.configure))
+        try:
+            (dev_path, config_file) = args.configure.split(':')
+        except ValueError:
+            exit("Bad --configure argument syntax")
+        evmapy.controller.send_request({
+            'command':  'config',
+            'device':   dev_path,
+            'file':     config_file,
+        })
     else:
         info = evmapy.util.get_app_info()
         logger = initialize_logging(info['name'], args.debug)

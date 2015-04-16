@@ -85,7 +85,7 @@ Crash course
   /dev/input/event1: Power Button
   /dev/input/event2: Video Bus
   /dev/input/event3: Logitech Logitech Cordless RumblePad 2
-  # evmapy --configure /dev/input/event3
+  # evmapy --generate /dev/input/event3
   # vim ~/.evmapy/Logitech.Logitech.Cordless.RumblePad.2.json
   # evmapy
   evmapy 1.0 initializing
@@ -104,7 +104,7 @@ If all goes well, pressing any button on your input device will cause the defaul
 Configuration
 -------------
 
-Event maps are read from JSON files. You can generate an example configuration file automatically using the ``--configure DEVICE_PATH`` command line switch. Each configuration file is a representation of an object with the following properties:
+Event maps are read from JSON files. You can generate an example configuration file automatically using the ``--generate DEVICE`` command line option. Each configuration file is a representation of an object with the following properties:
 
 - *axes*: list of input device axes *evmapy* will monitor, each of which must have exactly 2 actions assigned:
 
@@ -180,14 +180,14 @@ How do I...
 
 - *...change the event map for a given device?*
 
-  Each handled input device is associated with a Unix domain socket created in ``/tmp``. If you want to change a configuration of any handled device, send the name of the configuration file you want to load to its Unix domain socket (you can use ``socat`` for this). The configuration file supplied has to exist in ``~/.evmapy``. Send an empty name to restore default configuration for a given device.
+  Use the ``--configure DEVICE:FILE`` command line option. ``FILE`` has to exist in ``~/.evmapy``. If you don't specify ``FILE``, default configuration will be restored for ``DEVICE``.
 
   ::
 
     # Load configuration file ~/.evmapy/foo.json for /dev/input/event0
-    echo "foo.json" | socat - UNIX-SENDTO:/tmp/evmapy--dev-input-event0-Foo
+    evmapy --configure /dev/input/event0:foo.json
     # Restore default configuration for /dev/input/event1
-    echo | socat - UNIX-SENDTO:/tmp/evmapy--dev-input-event1-Bar
+    evmapy --configure /dev/input/event1:
 
 - *...rescan available devices?*
 
@@ -205,7 +205,7 @@ How do I...
 
 - *...diagnose why the application doesn't react to events the way I want it to?*
 
-  You can try running it with the ``--debug`` command line switch. This will cause *evmapy* to print information about every event received from any handled input device. If you see the events coming, but the actions you expect aren't performed, double-check your configuration first and if this doesn't help, feel free to contact me.
+  You can try running it with the ``--debug`` command line option. This will cause *evmapy* to print information about every event received from any handled input device. If you see the events coming, but the actions you expect aren't performed, double-check your configuration first and if this doesn't help, feel free to contact me.
 
 - *...run it as a daemon?*
 

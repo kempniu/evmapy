@@ -160,3 +160,25 @@ class TestController(unittest.TestCase):
         self.controller.cleanup()
         self.assertEqual(self.socket.return_value.close.call_count, 1)
         self.assertEqual(fake_remove.call_count, 1)
+
+
+@unittest.mock.patch('socket.socket')
+class TestSendRequest(unittest.TestCase):
+
+    """
+    Test send_request()
+    """
+
+    def test_send_request(self, fake_socket):
+        """
+        Check if send_request() properly processes data passed to it
+        """
+        request = {
+            'command':  'foo',
+            'param':    'bar',
+        }
+        evmapy.controller.send_request(request.copy())
+        self.assertEqual(fake_socket.call_count, 1)
+        sent_data = fake_socket.return_value.sendto.call_args[0][0]
+        sent = json.loads(sent_data.decode())
+        self.assertDictEqual(request, sent)
