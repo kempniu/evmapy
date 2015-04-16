@@ -92,7 +92,7 @@ def main(argv=sys.argv[1:]):
         logger.info("%s %s initializing", info['name'], info['version'])
         logger.info("running as user %s", info['user'].pw_name)
         logger.info("using configuration directory %s", info['config_dir'])
-        evmapy.multiplexer.EventMultiplexer().run()
+        evmapy.multiplexer.Multiplexer().run()
 
 
 if __name__ == "__main__":  # pragma: no cover

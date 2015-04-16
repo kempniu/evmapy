@@ -18,7 +18,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
 """
-:py:class:`EventSource` class implementation
+:py:class:`Source` class implementation
 """
 
 import logging
@@ -32,12 +32,12 @@ import evmapy.config
 import evmapy.util
 
 
-class EventSource(object):
+class Source(object):
 
     """
     Class encapsulating an :py:class:`evdev.InputDevice` instance which
     translates the events emitted by it to a list of actions to be
-    performed by :py:class:`evmapy.multiplexer.EventMultiplexer`. The
+    performed by a :py:class:`evmapy.multiplexer.Multiplexer`. The
     event-to-action mappings can be dynamically changed by writing the
     new configuration filename to a Unix domain socket.
     """

@@ -18,7 +18,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
 """
-:py:class:`EventMultiplexer` class implementation
+:py:class:`Multiplexer` class implementation
 """
 
 import logging
@@ -54,17 +54,16 @@ class SIGHUPReceivedException(Exception):
     pass
 
 
-class EventMultiplexer(object):
+class Multiplexer(object):
 
     """
     Class monitoring multiple file descriptors for incoming data. These
     file descriptors are both evdev descriptors and Unix domain sockets
-    which enable :py:class:`evmapy.source.EventSource` instances to be
+    which enable :py:class:`evmapy.source.Source` instances to be
     dynamically reconfigured.  Whenever any monitored descriptor is
     ready for reading, it is passed to its associated
-    :py:class:`evmapy.source.EventSource` for processing. If the result
-    of this processing in an action list, these actions are then
-    performed.
+    :py:class:`evmapy.source.Source` for processing. If the result of
+    this processing in an action list, these actions are then performed.
     """
 
     def __init__(self):
@@ -88,10 +87,10 @@ class EventMultiplexer(object):
     @property
     def devices(self):
         """
-        Return a list of handled :py:class:`evmapy.source.EventSource`
+        Return a list of handled :py:class:`evmapy.source.Source`
         instances.
 
-        :returns: list of handled :py:class:`evmapy.source.EventSource`
+        :returns: list of handled :py:class:`evmapy.source.Source`
             instances
         :rtype: set
         """
@@ -131,7 +130,7 @@ class EventMultiplexer(object):
         device = evdev.InputDevice(path)
         self._logger.debug("trying to add %s (%s)", device.fn, device.name)
         try:
-            source = evmapy.source.EventSource(device)
+            source = evmapy.source.Source(device)
             for fdesc in source.fds.values():
                 self._fds[fdesc] = source
                 self._poll.register(fdesc, select.POLLIN)
@@ -142,10 +141,10 @@ class EventMultiplexer(object):
     def _remove_device(self, source, quiet=False):
         """
         Stop processing events emitted by the device associated with the
-        given event source.
+        given source.
 
-        :param source: event source to stop listening to
-        :type source: :py:class:`evmapy.source.EventSource`
+        :param source: source to stop listening to
+        :type source: :py:class:`evmapy.source.Source`
         :param quiet: whether to log device removal or not
         :type quiet: bool
         :returns: None
@@ -230,8 +229,8 @@ class EventMultiplexer(object):
 
     def _perform_normal_actions(self, actions):
         """
-        Perform the actions requested by an event source in response to
-        the events it processed.
+        Perform the actions requested by a source in response to the
+        events it processed.
 
         :param actions: list of *(action, direction)* tuples, each of
             which specifies which action to perform in which "direction"

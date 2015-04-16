@@ -18,7 +18,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
 """
-Unit tests for the EventMultiplexer class
+Unit tests for the Multiplexer class
 """
 
 import unittest
@@ -45,16 +45,16 @@ class FooError(Exception):
 @unittest.mock.patch('select.poll')
 @unittest.mock.patch('evdev.UInput')
 @unittest.mock.patch('logging.getLogger')
-def mock_eventmultiplexer(*args):
+def mock_multiplexer(*args):
     """
-    Generate an EventMultiplexer with mocked attributes
+    Generate a Multiplexer with mocked attributes
     """
     (exception, fake_logger, fake_uinput, fake_poll, fake_listdevices) = args
     if exception:
         fake_uinput.side_effect = FooError()
     fake_listdevices.return_value = []
     try:
-        multiplexer = evmapy.multiplexer.EventMultiplexer()
+        multiplexer = evmapy.multiplexer.Multiplexer()
     except FooError as exc:
         multiplexer = exc
     return {
@@ -68,32 +68,32 @@ def mock_eventmultiplexer(*args):
 class TestMultiplexer(unittest.TestCase):
 
     """
-    Test EventMultiplexer behavior
+    Test Multiplexer behavior
     """
 
     def setUp(self):
         """
-        Create an EventMultiplexer to use with all tests
+        Create a Multiplexer to use with all tests
         """
         self.logger = None
         self.multiplexer = None
         self.poll = None
         self.uinput = None
-        tests.util.set_attrs_from_dict(self, mock_eventmultiplexer(False))
+        tests.util.set_attrs_from_dict(self, mock_multiplexer(False))
 
     def test_multiplexer_init_exception(self):
         """
-        Check EventMultiplexer behavior when an exception is raised upon
-        its initialization
+        Check Multiplexer behavior when an exception is raised upon its
+        initialization
         """
-        retval = mock_eventmultiplexer(True)
+        retval = mock_multiplexer(True)
         self.assertIsInstance(retval['multiplexer'], FooError)
         self.assertEqual(retval['logger'].exception.call_count, 1)
 
     def test_multiplexer_interrupt(self):
         """
-        Check if EventMultiplexer properly cleans up after itself after
-        being interrupted
+        Check if Multiplexer properly cleans up after itself after being
+        interrupted
         """
         self.poll.poll.side_effect = KeyboardInterrupt()
         self.multiplexer.run()
@@ -101,8 +101,8 @@ class TestMultiplexer(unittest.TestCase):
 
     def test_multiplexer_exception(self):
         """
-        Check if EventMultiplexer properly cleans up after itself after
-        an unhandled exception is raised
+        Check if Multiplexer properly cleans up after itself after an
+        unhandled exception is raised
         """
         self.poll.poll.side_effect = FooError()
         with self.assertRaises(FooError):
@@ -114,10 +114,9 @@ class TestMultiplexer(unittest.TestCase):
     @unittest.mock.patch('evdev.list_devices')
     def multiplexer_loop(self, *args):
         """
-        Add a fake device with the given path to EventMultiplexer, then
-        run the latter while replacing poll() results with provided
-        values and finally interrupt it by simulating a
-        KeyboardInterrupt
+        Add a fake device with the given path to Multiplexer, then run
+        the latter while replacing poll() results with provided values
+        and finally interrupt it by simulating a KeyboardInterrupt
         """
         (poll_results, source, fake_list, _) = args
         fake_list.return_value = ['/dev/input/event0']
@@ -130,75 +129,75 @@ class TestMultiplexer(unittest.TestCase):
         self.poll.poll.side_effect = poll_results
         self.multiplexer.run()
 
-    @unittest.mock.patch('evmapy.source.EventSource')
-    def test_multiplexer_add_device_bad(self, fake_eventsource):
+    @unittest.mock.patch('evmapy.source.Source')
+    def test_multiplexer_add_device_bad(self, fake_source):
         """
-        Check EventMultiplexer behavior when requested to add a device
-        which has an invalid configuration file
+        Check Multiplexer behavior when requested to add a device which
+        has an invalid configuration file
         """
         fake_error = evmapy.config.ConfigError('/foo.json', ValueError())
-        fake_eventsource.side_effect = fake_error
-        self.multiplexer_loop([], fake_eventsource)
+        fake_source.side_effect = fake_error
+        self.multiplexer_loop([], fake_source)
         self.assertFalse(self.poll.register.called)
 
-    @unittest.mock.patch('evmapy.source.EventSource')
-    def test_multiplexer_add_device_ok(self, fake_eventsource):
+    @unittest.mock.patch('evmapy.source.Source')
+    def test_multiplexer_add_device_ok(self, fake_source):
         """
-        Check EventMultiplexer behavior when requested to add a device
-        which has a valid configuration file
+        Check Multiplexer behavior when requested to add a device which
+        has a valid configuration file
         """
-        self.multiplexer_loop([], fake_eventsource)
-        self.assertEqual(fake_eventsource.call_count, 1)
+        self.multiplexer_loop([], fake_source)
+        self.assertEqual(fake_source.call_count, 1)
         self.assertEqual(self.poll.register.call_count, 2)
 
-    @unittest.mock.patch('evmapy.source.EventSource')
-    def test_multiplexer_remove_device(self, fake_eventsource):
+    @unittest.mock.patch('evmapy.source.Source')
+    def test_multiplexer_remove_device(self, fake_source):
         """
-        Check EventMultiplexer behavior when a handled device is removed
+        Check Multiplexer behavior when a handled device is removed
         """
-        fake_eventsource.return_value.process.side_effect = OSError()
-        self.multiplexer_loop([DEVICE_POLL_EVENT], fake_eventsource)
+        fake_source.return_value.process.side_effect = OSError()
+        self.multiplexer_loop([DEVICE_POLL_EVENT], fake_source)
         self.assertEqual(self.poll.unregister.call_count, 2)
-        fake_eventsource.return_value.cleanup.assert_called_once_with()
+        fake_source.return_value.cleanup.assert_called_once_with()
 
-    @unittest.mock.patch('evmapy.source.EventSource')
-    def test_multiplexer_device_fd(self, fake_eventsource):
+    @unittest.mock.patch('evmapy.source.Source')
+    def test_multiplexer_device_fd(self, fake_source):
         """
-        Check if EventMultiplexer properly reacts to device descriptor
+        Check if Multiplexer properly reacts to device descriptor
         activity
         """
-        self.multiplexer_loop([DEVICE_POLL_EVENT], fake_eventsource)
-        fake_eventsource.return_value.process.assert_called_once_with(
+        self.multiplexer_loop([DEVICE_POLL_EVENT], fake_source)
+        fake_source.return_value.process.assert_called_once_with(
             tests.util.DEVICE_FD
         )
 
-    @unittest.mock.patch('evmapy.source.EventSource')
-    def test_multiplexer_config_fd(self, fake_eventsource):
+    @unittest.mock.patch('evmapy.source.Source')
+    def test_multiplexer_config_fd(self, fake_source):
         """
-        Check if EventMultiplexer properly reacts to configuration
+        Check if Multiplexer properly reacts to configuration
         descriptor activity
         """
-        self.multiplexer_loop([CONFIG_POLL_EVENT], fake_eventsource)
-        fake_eventsource.return_value.process.assert_called_once_with(
+        self.multiplexer_loop([CONFIG_POLL_EVENT], fake_source)
+        fake_source.return_value.process.assert_called_once_with(
             tests.util.CONFIG_FD
         )
 
     @unittest.mock.patch('os.system')
-    @unittest.mock.patch('evmapy.source.EventSource')
+    @unittest.mock.patch('evmapy.source.Source')
     def multiplexer_check_action(self, *args):
         """
-        Run an EventMultiplexer loop, synthesizing the requested action
-        in both directions and returning either the device descriptor or
-        an empty list on each subsequent poll() call
+        Run a Multiplexer loop, synthesizing the requested action in
+        both directions and returning either the device descriptor or an
+        empty list on each subsequent poll() call
         """
-        (action, poll_device, fake_eventsource, fake_system) = args
+        (action, poll_device, fake_source, fake_system) = args
         actions = [
             [(action, 'down')],
             [(action, 'up')],
         ]
-        fake_eventsource.return_value.process.side_effect = actions
+        fake_source.return_value.process.side_effect = actions
         poll_results = [DEVICE_POLL_EVENT if d else [] for d in poll_device]
-        self.multiplexer_loop(poll_results, fake_eventsource)
+        self.multiplexer_loop(poll_results, fake_source)
         return fake_system
 
     def test_multiplexer_normal_key(self):

@@ -80,14 +80,14 @@ class TestLogging(unittest.TestCase):
 
 
 @unittest.mock.patch('evmapy.__main__.initialize_logging')
-@unittest.mock.patch('evmapy.multiplexer.EventMultiplexer')
+@unittest.mock.patch('evmapy.multiplexer.Multiplexer')
 def check_main_calls(*args):
     """
     Call main() with supplied arguments and check the calls it made
     """
-    (params, fake_eventmultiplexer, fake_logging) = args
+    (params, fake_multiplexer, fake_logging) = args
     info = evmapy.util.get_app_info()
-    fake_run = fake_eventmultiplexer.return_value.run
+    fake_run = fake_multiplexer.return_value.run
     evmapy.__main__.main(params['argv'])
     fake_logging.assert_called_once_with(info['name'], params['debug'])
     fake_run.assert_called_once_with()

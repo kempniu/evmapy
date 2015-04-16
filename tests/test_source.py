@@ -18,7 +18,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
 
 """
-Unit tests for the EventSource class
+Unit tests for the Source class
 """
 
 import unittest
@@ -37,9 +37,9 @@ import tests.util
 @unittest.mock.patch('logging.getLogger')
 @unittest.mock.patch('socket.socket')
 @unittest.mock.patch('evdev.InputDevice')
-def mock_eventsource(*args):
+def mock_source(*args):
     """
-    Generate an EventSource with mocked attributes
+    Generate a Source with mocked attributes
     """
     (fake_inputdevice, fake_socket, fake_logger, fake_config_load) = args
     fake_eventmap = {
@@ -88,29 +88,29 @@ def mock_eventsource(*args):
         'device':   device,
         'logger':   fake_logger.return_value,
         'socket':   fake_socket.return_value,
-        'source':   evmapy.source.EventSource(device),
+        'source':   evmapy.source.Source(device),
     }
 
 
 class TestSource(unittest.TestCase):
 
     """
-    Test EventSource behavior
+    Test Source behavior
     """
 
     def setUp(self):
         """
-        Create an EventSource to use with all tests
+        Create a Source to use with all tests
         """
         self.device = None
         self.logger = None
         self.socket = None
         self.source = None
-        tests.util.set_attrs_from_dict(self, mock_eventsource())
+        tests.util.set_attrs_from_dict(self, mock_source())
 
     def test_source_events(self):
         """
-        Check if EventSource properly translates all events
+        Check if Source properly translates all events
         """
         event_list = [
             (evdev.ecodes.ecodes['EV_KEY'], 300, evdev.KeyEvent.key_down),
@@ -147,7 +147,7 @@ class TestSource(unittest.TestCase):
     @unittest.mock.patch('evmapy.config.load')
     def test_source_config_load_invalid(self, fake_config_load):
         """
-        Check how EventSource behaves when asked to load an invalid
+        Check how Source behaves when asked to load an invalid
         configuration file
         """
         self.socket.recv.return_value = b'bar.json\n'
@@ -159,7 +159,7 @@ class TestSource(unittest.TestCase):
     @unittest.mock.patch('evmapy.config.load')
     def test_source_config_load_default(self, fake_config_load):
         """
-        Check how EventSource behaves when asked to reload the default
+        Check how Source behaves when asked to reload the default
         configuration file
         """
         self.socket.recv.return_value = b'\n'
@@ -169,7 +169,7 @@ class TestSource(unittest.TestCase):
     @unittest.mock.patch('evmapy.config.load')
     def test_source_config_load_grab(self, fake_config_load):
         """
-        Check if EventSource properly grabs its underlying device when
+        Check if Source properly grabs its underlying device when
         requested to
         """
         fake_config_load.side_effect = [
@@ -183,7 +183,7 @@ class TestSource(unittest.TestCase):
     @unittest.mock.patch('evmapy.config.load')
     def test_source_config_load_ungrab(self, fake_config_load):
         """
-        Check if EventSource properly ungrabs its underlying device when
+        Check if Source properly ungrabs its underlying device when
         requested to
         """
         fake_config_load.side_effect = [
@@ -197,7 +197,7 @@ class TestSource(unittest.TestCase):
     @unittest.mock.patch('os.remove')
     def test_source_cleanup(self, fake_remove):
         """
-        Check if EventSource properly cleans up after itself
+        Check if Source properly cleans up after itself
         """
         self.source.cleanup()
         self.socket.close.assert_called_once_with()
