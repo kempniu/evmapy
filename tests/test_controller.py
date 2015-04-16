@@ -80,8 +80,11 @@ class TestController(unittest.TestCase):
         """
         if jsonize:
             request = json.dumps(request).encode()
-        self.socket.return_value.recv.return_value = request
+        self.socket.return_value.recvfrom.return_value = (request, None)
         self.controller.process()
+        if self.socket.return_value.sendto.called:
+            sent_data = self.socket.return_value.sendto.call_args[0][0]
+            return json.loads(sent_data.decode())
 
     def test_controller_bad_json(self):
         """
@@ -123,6 +126,18 @@ class TestController(unittest.TestCase):
         self.check_controller_process(request)
         self.assertEqual(self.logger.error.call_count, 1)
 
+    def test_controller_response(self):
+        """
+        Check Controller behavior when handling a request which results
+        in a response; ensure exceptions are handled nicely
+        """
+        setattr(self.controller, 'do_foo', lambda _: {'foo': 'bar'})
+        self.socket.return_value.sendto.side_effect = TypeError()
+        request = {
+            'command':  'foo',
+        }
+        self.assertIsNotNone(self.check_controller_process(request))
+
     def test_controller_config_file(self):
         """
         Check control command "config" with an explicit configuration
@@ -151,6 +166,22 @@ class TestController(unittest.TestCase):
         self.target.load_device_config.assert_called_once_with(
             request['device'], None
         )
+
+    def test_controller_list(self):
+        """
+        Check control command "list"
+        """
+        fake_device = unittest.mock.Mock()
+        fake_device.device = {
+            'name': 'Foo Bar',
+            'path': '/dev/input/event0',
+        }
+        self.target.devices = [fake_device]
+        request = {
+            'command':  'list',
+        }
+        sent = self.check_controller_process(request)
+        self.assertDictEqual(sent[0], fake_device.device)
 
     @unittest.mock.patch('os.remove')
     def test_controller_cleanup(self, fake_remove):

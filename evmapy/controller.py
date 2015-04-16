@@ -91,12 +91,14 @@ class Controller(object):
         :rtype: list
         """
         try:
-            data = self._socket.recv(1024)
+            (data, peer) = self._socket.recvfrom(1024)
             request = json.loads(data.decode())
             command = request['command']
             method = getattr(self, 'do_' + command)
             try:
-                method(request)
+                result = method(request)
+                if result is not None:
+                    self._send_response(result, peer)
             except KeyError as exc:
                 self._logger.error(
                     "missing parameter for command '%s': '%s'",
@@ -109,6 +111,23 @@ class Controller(object):
         except AttributeError:
             self._logger.error("unknown control command '%s'", command)
         return []
+
+    def _send_response(self, result, peer):
+        """
+        Send the result of the request to the peer who sent the latter.
+
+        :param result: result of the request issued by the peer
+        :type result: dict
+        :param peer: path to peer socket
+        :type peer: str
+        :returns: None
+        """
+        try:
+            response = json.dumps(result).encode()
+            self._socket.sendto(response, peer)
+        except (ConnectionRefusedError, FileNotFoundError, PermissionError,
+                TypeError):
+            pass
 
     def cleanup(self):
         """
@@ -133,3 +152,19 @@ class Controller(object):
         except KeyError:
             config_file = None
         self._target.load_device_config(request['device'], config_file)
+        return None
+
+    def do_list(self, _):
+        """
+        Return the list of currently handled devices.
+
+        :returns: list of currently handled devices
+        :rtype: list
+        """
+        devices = []
+        for source in self._target.devices:
+            devices.append({
+                'name': source.device['name'],
+                'path': source.device['path'],
+            })
+        return devices
