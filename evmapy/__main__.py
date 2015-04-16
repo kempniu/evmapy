@@ -30,6 +30,7 @@ import sys
 import evdev
 
 import evmapy.multiplexer
+import evmapy.util
 
 
 def initialize_logging(appname, debug):
@@ -69,7 +70,8 @@ def main(argv=sys.argv[1:]):
     :returns: application exit code
     :rtype: int
     """
-    parser = argparse.ArgumentParser()
+    info = evmapy.util.get_app_info()
+    parser = argparse.ArgumentParser(prog=info['name'])
     group = parser.add_mutually_exclusive_group()
     group.add_argument("--list", action='store_true',
                        help="list available devices")
