@@ -35,6 +35,9 @@ class Source(object):
     Class encapsulating an :py:class:`evdev.InputDevice` instance which
     translates the events emitted by it to a list of actions to be
     performed by a :py:class:`evmapy.multiplexer.Multiplexer`.
+
+    :param device: input device to use
+    :type device: :py:class:`evdev.InputDevice`
     """
 
     def __init__(self, device):

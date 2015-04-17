@@ -80,6 +80,9 @@ class Controller(object):
     Class responsible for dynamically changing the behavior of a given
     :py:class:`evmapy.multiplexer.Multiplexer` by processing requests
     sent to a Unix domain socket.
+
+    :param target: multiplexer to control
+    :type target: :py:class:`evmapy.multiplexer.Multiplexer`
     """
 
     def __init__(self, target):
