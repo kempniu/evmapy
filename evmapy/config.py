@@ -40,7 +40,7 @@ class ConfigError(Exception):
     :param path: path to the configuration file which caused the error
     :type path: str
     :param reason: last raised exception
-    :type reason: :py:class:`Exception`
+    :type reason: Exception
     """
 
     def __init__(self, path, reason):
@@ -66,7 +66,7 @@ def _get_device_config_path(device):
 
     :param device: input device to get the default configuration file
         path for
-    :type device: :py:class:`evdev.InputDevice`
+    :type device: evdev.InputDevice
     :returns: path to the default configuration file for the given input
         device
     :rtype: str
@@ -103,7 +103,7 @@ def generate(device):
     device.
 
     :param device: device to generate configuration for
-    :type device: :py:class:`evdev.InputDevice`
+    :type device: evdev.InputDevice
     :returns: default configuration dictionary
     :rtype: dict
     """
@@ -170,7 +170,7 @@ def load(device, name):
     Load configuration for the given device.
 
     :param device: device to load configuration for
-    :type device: :py:class:`evdev.InputDevice`
+    :type device: evdev.InputDevice
     :param name: name of the configuration file to load (`None` and `''`
         cause the default configuration file to be used)
     :type name: str

@@ -37,7 +37,7 @@ class Source(object):
     performed by a :py:class:`evmapy.multiplexer.Multiplexer`.
 
     :param device: input device to use
-    :type device: :py:class:`evdev.InputDevice`
+    :type device: evdev.InputDevice
     """
 
     def __init__(self, device):

@@ -152,7 +152,7 @@ class Multiplexer(object):
         given source.
 
         :param source: source to stop listening to
-        :type source: :py:class:`evmapy.source.Source`
+        :type source: evmapy.source.Source
         :param quiet: whether to log device removal or not
         :type quiet: bool
         :returns: None

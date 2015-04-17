@@ -82,7 +82,7 @@ class Controller(object):
     sent to a Unix domain socket.
 
     :param target: multiplexer to control
-    :type target: :py:class:`evmapy.multiplexer.Multiplexer`
+    :type target: evmapy.multiplexer.Multiplexer
     """
 
     def __init__(self, target):
