@@ -74,15 +74,15 @@ def main(argv=sys.argv[1:]):
     info = evmapy.util.get_app_info()
     parser = argparse.ArgumentParser(prog=info['name'])
     group = parser.add_mutually_exclusive_group()
-    group.add_argument("--list-all", action='store_true',
+    group.add_argument("-L", "--list-all", action='store_true',
                        help="list available devices")
-    group.add_argument("--list", action='store_true',
+    group.add_argument("-l", "--list", action='store_true',
                        help="list currently handled devices")
-    group.add_argument("--generate", metavar="DEVICE",
+    group.add_argument("-g", "--generate", metavar="DEVICE",
                        help="generate configuration for DEVICE")
-    group.add_argument("--configure", metavar="DEVICE:FILE",
+    group.add_argument("-c", "--configure", metavar="DEVICE:FILE",
                        help="load DEVICE configuration from FILE")
-    group.add_argument("--debug", action='store_true',
+    group.add_argument("-D", "--debug", action='store_true',
                        help="run in debug mode")
     args = parser.parse_args(argv)
     if args.list_all:
