@@ -77,7 +77,12 @@ class Multiplexer(object):
             # Open /dev/uinput for future use
             info = evmapy.util.get_app_info()
             app_with_pid = '%s[%d]' % (info['name'], os.getpid())
-            self._uinput = evdev.UInput(name=app_with_pid)
+            try:
+                self._uinput = evdev.UInput(name=app_with_pid)
+            except evdev.uinput.UInputError as exc:
+                self._logger.warning(
+                    "injecting keypresses will not be possible: %s", str(exc)
+                )
             # Start processing events from all configured devices
             self._poll = select.poll()
             self._scan_devices()
@@ -184,7 +189,8 @@ class Multiplexer(object):
             self._controller.cleanup()
             for source in self.devices:
                 self._remove_device(source, quiet=True)
-            self._uinput.close()
+            if self._uinput:
+                self._uinput.close()
             self._logger.info("quitting")
 
     def _run(self):
@@ -232,7 +238,8 @@ class Multiplexer(object):
             if not results:
                 # It's time for the next delayed action
                 self._perform_delayed()
-            self._uinput.syn()
+            if self._uinput:
+                self._uinput.syn()
 
     def _perform_normal_actions(self, actions):
         """
@@ -307,6 +314,8 @@ class Multiplexer(object):
         :type press: bool
         :returns: None
         """
+        if not self._uinput:
+            return
         keys = evmapy.util.as_list(action['target'])
         for key in keys:
             ecode = evdev.ecodes.ecodes['EV_KEY']

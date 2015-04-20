@@ -95,7 +95,7 @@ Crash course
   /dev/input/event3: loaded /root/.evmapy/Logitech.Logitech.Cordless.RumblePad.2.json
   handling 1 device(s)
 
-**NOTE:** *evmapy* doesn't need to be run with root privileges as long as the user you're running it as is allowed to both read from ``/dev/input/eventX`` and write to ``/dev/uinput``. However, running it as root for testing purposes is a good way to make sure you're not facing a permissions-related issue.
+**NOTE:** *evmapy* doesn't need to be run with root privileges as long as the user you're running it as is allowed to read from ``/dev/input/eventX``. However, running it as root for testing purposes is a good way to make sure you're not facing a permissions-related issue.
 
 **NOTE:** Use ``python3 -m evmapy`` instead of ``evmapy`` if you haven't installed the package in your system yet.
 
@@ -205,7 +205,7 @@ How do I...
 
 - *...diagnose why the application doesn't react to events the way I want it to?*
 
-  You can try running it with the ``--debug`` command line option. This will cause *evmapy* to print information about every event received from any handled input device. If you see the events coming, but the actions you expect aren't performed, double-check your configuration first and if this doesn't help, feel free to contact me.
+  If you're expecting *evmapy* to inject keypresses, make sure the user you're running it as is allowed to **write** to ``/dev/uinput`` - *evmapy* warns you upon its startup if it encounters a problem with that. If that's not your case, you can try running *evmapy* with the ``--debug`` command line option. This will cause every event received from any handled input device to be logged. If you see the events coming, but the actions you expect aren't performed, double-check your configuration first and if this doesn't help, feel free to contact me.
 
 - *...run it as a daemon?*
 

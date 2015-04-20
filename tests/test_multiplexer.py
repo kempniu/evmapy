@@ -24,6 +24,8 @@ Unit tests for the Multiplexer class
 import unittest
 import unittest.mock
 
+import evdev
+
 import evmapy.config
 import evmapy.multiplexer
 
@@ -52,8 +54,10 @@ def mock_multiplexer(*args):
     """
     (exception, fake_logger, fake_uinput, fake_poll, fake_listdevices,
      fake_controller) = args
-    if exception:
+    if exception == 'unhandled':
         fake_uinput.side_effect = FooError()
+    elif exception == 'uinput':
+        fake_uinput.side_effect = evdev.uinput.UInputError()
     fake_listdevices.return_value = []
     fake_controller.return_value.device = 'socket'
     fake_controller.return_value.fileno.return_value = tests.util.CONTROL_FD
@@ -85,14 +89,14 @@ class TestMultiplexer(unittest.TestCase):
         self.multiplexer = None
         self.poll = None
         self.uinput = None
-        tests.util.set_attrs_from_dict(self, mock_multiplexer(False))
+        tests.util.set_attrs_from_dict(self, mock_multiplexer(None))
 
     def test_multiplexer_init_exception(self):
         """
-        Check Multiplexer behavior when an exception is raised upon its
-        initialization
+        Check Multiplexer behavior when an unhandled exception is raised
+        upon its initialization
         """
-        retval = mock_multiplexer(True)
+        retval = mock_multiplexer('unhandled')
         self.assertIsInstance(retval['multiplexer'], FooError)
         self.assertEqual(retval['logger'].exception.call_count, 1)
 
@@ -284,6 +288,22 @@ class TestMultiplexer(unittest.TestCase):
         poll_device = (True, True)
         fake_system = self.multiplexer_check_action(action, poll_device)
         self.assertFalse(fake_system.called)
+
+    def test_multiplexer_no_uinput(self):
+        """
+        Check key action with normal trigger when /dev/uinput was not
+        opened correctly
+        """
+        tests.util.set_attrs_from_dict(self, mock_multiplexer('uinput'))
+        action = {
+            'id':       1,
+            'type':     'key',
+            'trigger':  'normal',
+            'target':   'KEY_ENTER',
+        }
+        poll_device = (True, True)
+        self.multiplexer_check_action(action, poll_device)
+        self.assertEqual(self.uinput.write.call_count, 0)
 
     @unittest.mock.patch('evmapy.source.Source')
     def test_multiplexer_device_config(self, fake_source):
