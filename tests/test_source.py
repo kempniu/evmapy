@@ -111,6 +111,7 @@ class TestSource(unittest.TestCase):
         event_list = [
             (evdev.ecodes.ecodes['EV_KEY'], 300, evdev.KeyEvent.key_down),
             (evdev.ecodes.ecodes['EV_KEY'], 200, evdev.KeyEvent.key_down),
+            (evdev.ecodes.ecodes['EV_KEY'], 200, evdev.KeyEvent.key_hold),
             (evdev.ecodes.ecodes['EV_KEY'], 200, evdev.KeyEvent.key_up),
             (evdev.ecodes.ecodes['EV_ABS'], 100, 0),
             (evdev.ecodes.ecodes['EV_ABS'], 100, 64),

@@ -103,10 +103,12 @@ class Source(object):
                 continue
             actions = self._eventmap[event.code]
             if event.type == evdev.ecodes.ecodes['EV_KEY']:
-                if event.value == evdev.KeyEvent.key_up:
-                    direction = 'up'
-                else:
+                if event.value == evdev.KeyEvent.key_down:
                     direction = 'down'
+                elif event.value == evdev.KeyEvent.key_up:
+                    direction = 'up'
+                elif event.value == evdev.KeyEvent.key_hold:
+                    continue
                 pending.append((actions['press'], direction))
             elif event.type == evdev.ecodes.ecodes['EV_ABS']:
                 if (event.value <= actions['min']['value'] and
