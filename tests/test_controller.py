@@ -21,6 +21,7 @@
 Unit tests for the Controller class
 """
 
+import errno
 import json
 import unittest
 import unittest.mock
@@ -30,14 +31,18 @@ import evmapy.controller
 import tests.util
 
 
-@unittest.mock.patch('logging.getLogger')
 @unittest.mock.patch('os.chmod')
 @unittest.mock.patch('socket.socket')
+@unittest.mock.patch('os.mkdir')
+@unittest.mock.patch('logging.getLogger')
 def mock_controller(*args):
     """
     Generate a Controller with mocked attributes
     """
-    (fake_socket, _, fake_logger) = args
+    (exception, fake_logger, fake_mkdir, fake_socket, _) = args
+    if exception:
+        fake_socket.return_value.bind.side_effect = exception
+    fake_mkdir.side_effect = FileExistsError()
     fake_target = unittest.mock.Mock()
     controller = evmapy.controller.Controller(fake_target)
     return {
@@ -62,9 +67,9 @@ class TestController(unittest.TestCase):
         self.logger = None
         self.target = None
         self.socket = None
-        tests.util.set_attrs_from_dict(self, mock_controller())
+        tests.util.set_attrs_from_dict(self, mock_controller(None))
 
-    def test_controller_socket(self):
+    def test_controller_socket_ok(self):
         """
         Test socket creation
         """
@@ -72,6 +77,21 @@ class TestController(unittest.TestCase):
         self.assertEqual(self.socket.return_value.bind.call_count, 1)
         fileno = self.controller.fileno()
         self.assertIs(fileno, self.socket.return_value.fileno.return_value)
+
+    def test_controller_socket_in_use(self):
+        """
+        Test Controller behavior when the control socket is already used
+        """
+        with self.assertRaises(evmapy.controller.SocketInUseError):
+            mock_controller(OSError(errno.EADDRINUSE, "Foo"))
+
+    def test_controller_socket_error(self):
+        """
+        Test Controller behavior when an unhandled exception is raised
+        while binding the control socket
+        """
+        with self.assertRaises(OSError):
+            mock_controller(OSError())
 
     def check_controller_process(self, request, jsonize=True):
         """

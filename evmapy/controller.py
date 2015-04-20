@@ -21,6 +21,7 @@
 :py:class:`Controller` class implementation
 """
 
+import errno
 import json
 import logging
 import os
@@ -31,6 +32,13 @@ import stat
 import evmapy.util
 
 
+class SocketInUseError(Exception):
+    """
+    Exception raised when another instance of evmapy is already running.
+    """
+    pass
+
+
 def _get_control_socket_path():
     """
     Return the path to the control socket.
@@ -39,7 +47,7 @@ def _get_control_socket_path():
     :rtype: str
     """
     info = evmapy.util.get_app_info()
-    return '/tmp/%s.socket' % info['name']
+    return os.path.join(info['config_dir'], '%s.socket' % info['name'])
 
 
 def send_request(request):
@@ -53,12 +61,12 @@ def send_request(request):
     :rtype: None or dict
     """
     info = evmapy.util.get_app_info()
-    client_socket_path = '/tmp/%s.%d.socket' % (info['name'], os.getpid())
+    client_socket_name = '%s-client.%d.socket' % (info['name'], os.getpid())
+    client_socket_path = os.path.join(info['config_dir'], client_socket_name)
     try:
         client_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
         client_socket.bind(client_socket_path)
-        os.chmod(client_socket_path, stat.S_IRUSR | stat.S_IWUSR |
-                 stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH)
+        os.chmod(client_socket_path, stat.S_IRUSR | stat.S_IWUSR)
         request_data = json.dumps(request).encode()
         client_socket.sendto(request_data, _get_control_socket_path())
         if request['wait']:
@@ -69,7 +77,9 @@ def send_request(request):
             else:
                 exit("Timeout waiting for a response from %s" % info['name'])
     except FileNotFoundError:
-        exit("%s is not running" % info['name'])
+        exit("No %s instance is running as %s" % (
+            info['name'], info['user'].pw_name
+        ))
     finally:
         os.remove(client_socket_path)
 
@@ -88,9 +98,19 @@ class Controller(object):
     def __init__(self, target):
         self._logger = logging.getLogger()
         self._target = target
-        control_socket_path = _get_control_socket_path()
-        control_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
-        control_socket.bind(control_socket_path)
+        try:
+            control_socket_path = _get_control_socket_path()
+            os.mkdir(os.path.dirname(control_socket_path))
+        except FileExistsError:
+            pass
+        try:
+            control_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+            control_socket.bind(control_socket_path)
+        except OSError as exc:
+            if exc.errno == errno.EADDRINUSE:
+                raise SocketInUseError()
+            else:
+                raise
         os.chmod(control_socket_path, stat.S_IRUSR | stat.S_IWUSR)
         self._socket = control_socket
 

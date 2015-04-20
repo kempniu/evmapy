@@ -43,19 +43,21 @@ class FooError(Exception):
     pass
 
 
-@unittest.mock.patch('evmapy.controller.Controller')
 @unittest.mock.patch('evdev.list_devices')
 @unittest.mock.patch('select.poll')
 @unittest.mock.patch('evdev.UInput')
+@unittest.mock.patch('evmapy.controller.Controller')
 @unittest.mock.patch('logging.getLogger')
 def mock_multiplexer(*args):
     """
     Generate a Multiplexer with mocked attributes
     """
-    (exception, fake_logger, fake_uinput, fake_poll, fake_listdevices,
-     fake_controller) = args
+    (exception, fake_logger, fake_controller, fake_uinput, fake_poll,
+     fake_listdevices) = args
     if exception == 'unhandled':
-        fake_uinput.side_effect = FooError()
+        fake_controller.side_effect = FooError()
+    elif exception == 'controller':
+        fake_controller.side_effect = evmapy.controller.SocketInUseError()
     elif exception == 'uinput':
         fake_uinput.side_effect = evdev.uinput.UInputError()
     fake_listdevices.return_value = []
@@ -90,6 +92,14 @@ class TestMultiplexer(unittest.TestCase):
         self.poll = None
         self.uinput = None
         tests.util.set_attrs_from_dict(self, mock_multiplexer(None))
+
+    def test_multiplexer_control_in_use(self):
+        """
+        Check Multiplexer behavior when another instance of evmapy is
+        already running as the same user
+        """
+        with self.assertRaises(SystemExit):
+            mock_multiplexer('controller')
 
     def test_multiplexer_init_exception(self):
         """

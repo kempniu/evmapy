@@ -74,11 +74,13 @@ class Multiplexer(object):
         self._poll = None
         self._uinput = None
         try:
-            # Open /dev/uinput for future use
             info = evmapy.util.get_app_info()
-            app_with_pid = '%s[%d]' % (info['name'], os.getpid())
+            app_with_user = (info['name'], info['user'].pw_name)
+            # Create the control socket
+            self._controller = evmapy.controller.Controller(self)
+            # Try to open /dev/uinput, failing gracefully
             try:
-                self._uinput = evdev.UInput(name=app_with_pid)
+                self._uinput = evdev.UInput(name='%s (%s)' % app_with_user)
             except evdev.uinput.UInputError as exc:
                 self._logger.warning(
                     "injecting keypresses will not be possible: %s", str(exc)
@@ -86,10 +88,11 @@ class Multiplexer(object):
             # Start processing events from all configured devices
             self._poll = select.poll()
             self._scan_devices()
-            # Open control socket and start monitoring it
-            self._controller = evmapy.controller.Controller(self)
+            # Start monitoring the control socket
             self._fds[self._controller.fileno()] = self._controller
             self._poll.register(self._controller, select.POLLIN)
+        except evmapy.controller.SocketInUseError:
+            exit("%s is already running as %s" % app_with_user)
         except:
             self._logger.exception("unhandled exception while initializing:")
             raise
