@@ -152,7 +152,7 @@ class TestConfig(unittest.TestCase):
         (error, fake_read) = args
         fake_read.side_effect = error
         with self.assertRaises(evmapy.config.ConfigError):
-            evmapy.config.load(None, 'Foo.Bar.json')
+            evmapy.config.load(unittest.mock.Mock(), 'Foo.Bar.json')
 
     def test_config_load_not_found(self):
         """

@@ -1,14 +1,11 @@
-evmapy
-======
-
 .. image:: https://img.shields.io/travis/kempniu/evmapy.svg
    :target: https://travis-ci.org/kempniu/evmapy
 
 .. image:: https://img.shields.io/coveralls/kempniu/evmapy.svg
    :target: https://coveralls.io/r/kempniu/evmapy
 
-Summary
--------
+evmapy
+======
 
 *evmapy* is an evdev event mapper written in Python. This mumbo-jumbo translates into English as "an application for the Linux operating system capable of performing arbitrary actions upon detecting certain input events".
 
@@ -26,9 +23,9 @@ Features
 
 - Works with any evdev-compatible input device, from a power button to a 6-axis joypad
 - Automatic input device configuration generation
-- Runs in foreground or as a daemon (using external software like ``start-stop-daemon``)
 - Dynamic event map switching
 - Adding and removing devices on-the-fly
+- Runs in foreground or as a daemon (using external software like ``start-stop-daemon``)
 - Supported events:
 
   - key/button presses
@@ -39,7 +36,7 @@ Features
   - key press injection
   - external program execution
 
-- Supported action triggers:
+- Supported action triggering modes:
 
   - press
   - hold
@@ -47,16 +44,16 @@ Features
 Installation
 ------------
 
-*evmapy* is not currently available through `PyPI`_, so you'll need to handle it manually:
+*evmapy* is **not** currently available through `PyPI`_, so you'll need to handle it manually:
 
 ::
 
-  pip install evdev
+  pip3 install evdev
   git clone https://github.com/kempniu/evmapy.git
   cd evmapy
   python3 setup.py test
 
-**NOTE:** Commands for your favorite Linux distribution may be a bit different, e.g. you might have to use ``pip3`` instead of ``pip`` etc.
+**NOTE:** Commands for your favorite Linux distribution may be a bit different, e.g. you might have to use ``pip`` instead of ``pip3`` etc.
 
 If you get any errors from running the last command (and you're positive you're running Python 3.3+), please let me know.
 
@@ -73,7 +70,7 @@ If you decide to install it in your system, run:
   python3 setup.py install
 
 
-and it will be available simply as *evmapy*.
+and it will be available simply as ``evmapy``.
 
 Crash course
 ------------
@@ -81,10 +78,10 @@ Crash course
 ::
 
   # evmapy --list-all
-  /dev/input/event0: Power Button
-  /dev/input/event1: Power Button
-  /dev/input/event2: Video Bus
   /dev/input/event3: Logitech Logitech Cordless RumblePad 2
+  /dev/input/event2: Video Bus
+  /dev/input/event1: Power Button
+  /dev/input/event0: Power Button
   # evmapy --generate /dev/input/event3
   # vim ~/.evmapy/Logitech.Logitech.Cordless.RumblePad.2.json
   # evmapy
@@ -112,7 +109,7 @@ Event maps are read from JSON files. You can generate an example configuration f
   - *max*: performed when the value of this axis is the highest possible one,
 
 - *buttons*: list of input device keys/buttons *evmapy* will monitor, each of which must have only a single *press* action assigned,
-- *grab*: set it to ``True`` if you want *evmapy* to become the only recipient of the events emitted by this input device.
+- *grab*: set it to *true* if you want *evmapy* to become the only recipient of the events emitted by this input device.
 
 **NOTE:** Don't forget that a typical analog stick on a joypad consists of 2 axes (horizontal and vertical)!
 
@@ -144,7 +141,7 @@ If all this sounds too complicated, here are some examples to clear things up:
 
   ::
 
-    "buttons" = [
+    "buttons": [
         {
             "alias": "Button 1",
             "code": 304,
@@ -197,7 +194,7 @@ How do I...
 
   ::
 
-    ACTION=="add", KERNEL=="event[0-9]*", RUN+="/usr/local/bin/signal-evmapy.sh"
+    ACTION=="add", KERNEL=="event[0-9]*", RUN+="/usr/bin/pkill -HUP -f evmapy"
 
 - *...shutdown the application cleanly?*
 
@@ -205,7 +202,7 @@ How do I...
 
 - *...diagnose why the application doesn't react to events the way I want it to?*
 
-  If you're expecting *evmapy* to inject keypresses, make sure the user you're running it as is allowed to **write** to ``/dev/uinput`` - *evmapy* warns you upon its startup if it encounters a problem with that. If that's not your case, you can try running *evmapy* with the ``--debug`` command line option. This will cause every event received from any handled input device to be logged. If you see the events coming, but the actions you expect aren't performed, double-check your configuration first and if this doesn't help, feel free to contact me.
+  If you're expecting *evmapy* to inject keypresses, make sure the user you're running it as is allowed to **write** to ``/dev/uinput`` - *evmapy* warns you upon its startup if it encounters a problem with that. If that's not your case, you can try running *evmapy* with the ``--debug`` command line option. This will cause every event received from any handled input device to be logged, along with any actions *evmapy* is attempting to perform. If you see the events coming, but the actions you expect aren't performed, double-check your configuration first and if this doesn't help, feel free to contact me.
 
 - *...run it as a daemon?*
 

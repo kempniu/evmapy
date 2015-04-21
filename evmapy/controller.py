@@ -34,7 +34,8 @@ import evmapy.util
 
 class SocketInUseError(Exception):
     """
-    Exception raised when another instance of evmapy is already running.
+    Exception raised when another instance of the program is already
+    running.
     """
     pass
 

@@ -77,7 +77,7 @@ def mock_multiplexer(*args):
     }
 
 
-class TestMultiplexer(unittest.TestCase):
+class TestMultiplexerBase(unittest.TestCase):
     """
     Base class for other test classes, to avoid boilerplate
     """
@@ -93,7 +93,7 @@ class TestMultiplexer(unittest.TestCase):
         tests.util.set_attrs_from_dict(self, mock_multiplexer(None))
 
 
-class TestMultiplexerExceptions(TestMultiplexer):
+class TestMultiplexerExceptions(TestMultiplexerBase):
 
     """
     Test Multiplexer behavior when various exceptions are raised
@@ -148,7 +148,7 @@ class TestMultiplexerExceptions(TestMultiplexer):
         self.uinput.close.assert_called_once_with()
 
 
-class TestMultiplexerLoop(TestMultiplexer):
+class TestMultiplexerLoop(TestMultiplexerBase):
 
     """
     Test Multiplexer's main loop

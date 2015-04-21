@@ -259,7 +259,7 @@ class Multiplexer(object):
                     self._perform_normal_actions(actions)
             if not results:
                 # It's time for the next delayed action
-                self._perform_delayed()
+                self._perform_delayed_actions()
             if self._uinput:
                 self._uinput.syn()
 
@@ -299,11 +299,11 @@ class Multiplexer(object):
                         )
                         del self._delayed[index]
                     except StopIteration:
-                        # Action has already been removed from the queue by
-                        # _perform_delayed()
+                        # Action has already been removed from the queue
+                        # by _perform_delayed_actions()
                         pass
 
-    def _perform_delayed(self):
+    def _perform_delayed_actions(self):
         """
         Perform the next queued delayed action.
 

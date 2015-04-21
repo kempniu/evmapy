@@ -35,7 +35,7 @@ class ConfigError(Exception):
 
     """
     Exception thrown when an error occurs when trying to load a device
-    configuration file
+    configuration file.
 
     :param path: path to the configuration file which caused the error
     :type path: str
