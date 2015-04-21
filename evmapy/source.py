@@ -21,12 +21,20 @@
 :py:class:`Source` class implementation
 """
 
+import errno
 import logging
 
 import evdev
 
 import evmapy.config
 import evmapy.util
+
+
+class DeviceRemovedException(Exception):
+    """
+    Exception raised when the associated input device gets disconnected.
+    """
+    pass
 
 
 class Source(object):
@@ -97,7 +105,7 @@ class Source(object):
             pending.append((actions[limit], direction))
 
         pending = []
-        for event in self._device.read():
+        for event in self._pending_events():
             self._logger.debug(event)
             if event.code not in self._eventmap:
                 continue
@@ -123,3 +131,22 @@ class Source(object):
                             _perform_axis_action(limit, 'up')
 
         return pending
+
+    def _pending_events(self):
+        """
+        Return a generator yielding pending input events and raising an
+        exception if the device is no longer available.
+
+        :returns: generator yielding pending input events
+        :rtype: generator
+        :raises DeviceRemovedException: when the input device is no
+            longer available
+        """
+        try:
+            for event in self._device.read():
+                yield event
+        except OSError as exc:
+            if exc.errno == errno.ENODEV:
+                raise DeviceRemovedException()
+            else:
+                raise

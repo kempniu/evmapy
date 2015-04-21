@@ -233,7 +233,7 @@ class Multiplexer(object):
                 try:
                     processor = self._fds[fdesc]
                     actions = processor.process()
-                except OSError:
+                except evmapy.source.DeviceRemovedException:
                     self._remove_device(processor)
                     continue
                 if actions:

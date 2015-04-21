@@ -21,6 +21,7 @@
 Unit tests for the Source class
 """
 
+import errno
 import unittest
 import unittest.mock
 
@@ -140,6 +141,24 @@ class TestSource(unittest.TestCase):
             expected = expected_list.pop(0)
             self.assertTupleEqual((action['target'], direction), expected)
         self.assertEqual(expected_list, [])
+
+    def test_source_device_removed(self):
+        """
+        Test Source behavior when the input device associated with it
+        gets disconnected
+        """
+        self.device.read.side_effect = OSError(errno.ENODEV, "Foo")
+        with self.assertRaises(evmapy.source.DeviceRemovedException):
+            self.source.process()
+
+    def test_source_device_error(self):
+        """
+        Test Source behavior when an unhandled exception is raised while
+        reading from its associated input device
+        """
+        self.device.read.side_effect = OSError()
+        with self.assertRaises(OSError):
+            self.source.process()
 
     @unittest.mock.patch('evmapy.config.load')
     def test_source_load_config_grab(self, fake_config_load):

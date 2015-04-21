@@ -28,6 +28,7 @@ import evdev
 
 import evmapy.config
 import evmapy.multiplexer
+import evmapy.source
 
 import tests.util
 
@@ -177,7 +178,8 @@ class TestMultiplexer(unittest.TestCase):
         """
         Check Multiplexer behavior when a handled device is removed
         """
-        fake_source.return_value.process.side_effect = OSError()
+        fake_exception = evmapy.source.DeviceRemovedException()
+        fake_source.return_value.process.side_effect = fake_exception
         self.multiplexer_loop([DEVICE_POLL_EVENT], fake_source)
         self.assertEqual(self.poll.unregister.call_count, 2)
 
