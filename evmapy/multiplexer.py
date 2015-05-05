@@ -74,6 +74,7 @@ class Multiplexer(object):
         self._poll = None
         self._uinput = None
         try:
+            signal.signal(signal.SIGHUP, signal.SIG_IGN)
             info = evmapy.util.get_app_info()
             app_with_user = (info['name'], info['user'].pw_name)
             # Create the control socket
