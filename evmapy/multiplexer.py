@@ -93,7 +93,9 @@ class Multiplexer(object):
             self._fds[self._controller.fileno()] = self._controller
             self._poll.register(self._controller, select.POLLIN)
         except evmapy.controller.SocketInUseError:
-            exit("%s is already running as %s" % app_with_user)
+            error_msg = "%s is already running as %s" % app_with_user
+            self._logger.error(error_msg)
+            exit(1)
         except:
             self._logger.exception("unhandled exception while initializing:")
             raise
