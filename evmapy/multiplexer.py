@@ -56,6 +56,13 @@ class SIGHUPReceivedException(Exception):
     pass
 
 
+class SIGTERMReceivedException(Exception):
+    """
+    Exception raised when a SIGTERM signal is received.
+    """
+    pass
+
+
 class Multiplexer(object):
 
     """
@@ -185,6 +192,8 @@ class Multiplexer(object):
             self._run()
         except KeyboardInterrupt:
             self._logger.info("user requested shutdown")
+        except SIGTERMReceivedException:
+            self._logger.info("SIGTERM received")
         except:
             self._logger.exception("unhandled exception:")
             raise
@@ -208,15 +217,22 @@ class Multiplexer(object):
         :returns: None
         """
 
-        def sighup_handler(*_):     # pragma: no cover
+        def raise_signal_exception(signum, _):     # pragma: no cover
             """
-            Raise an exception to signal SIGHUP reception.
+            Raise an exception based on received signal.
 
-            :raises: :py:exc:`SIGHUPReceivedException`
+            :raises evmapy.multiplexer.SIGHUPReceivedException:
+                when SIGHUP is received
+            :raises evmapy.multiplexer.SIGTERMReceivedException:
+                when SIGTERM is received
             """
-            raise SIGHUPReceivedException
+            if signum == signal.SIGHUP:
+                raise SIGHUPReceivedException
+            elif signum == signal.SIGTERM:
+                raise SIGTERMReceivedException
 
-        signal.signal(signal.SIGHUP, sighup_handler)
+        signal.signal(signal.SIGHUP, raise_signal_exception)
+        signal.signal(signal.SIGTERM, raise_signal_exception)
         while True:
             # Calculate time until the next delayed action triggers
             try:

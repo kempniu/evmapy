@@ -116,7 +116,18 @@ class TestMultiplexer(unittest.TestCase):
         Check if Multiplexer properly cleans up after itself after being
         interrupted
         """
-        self.poll.poll.side_effect = KeyboardInterrupt()
+        fake_sigint = KeyboardInterrupt()
+        self.poll.poll.side_effect = fake_sigint
+        self.multiplexer.run()
+        self.uinput.close.assert_called_once_with()
+
+    def test_multiplexer_sigterm(self):
+        """
+        Check if Multiplexer properly cleans up after itself after being
+        sent a SIGTERM
+        """
+        fake_sigterm = evmapy.multiplexer.SIGTERMReceivedException()
+        self.poll.poll.side_effect = fake_sigterm
         self.multiplexer.run()
         self.uinput.close.assert_called_once_with()
 
