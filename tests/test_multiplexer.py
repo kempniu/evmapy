@@ -78,11 +78,9 @@ def mock_multiplexer(*args):
 
 
 class TestMultiplexer(unittest.TestCase):
-
     """
-    Test Multiplexer behavior
+    Base class for other test classes, to avoid boilerplate
     """
-
     def setUp(self):
         """
         Create a Multiplexer to use with all tests
@@ -93,6 +91,13 @@ class TestMultiplexer(unittest.TestCase):
         self.poll = None
         self.uinput = None
         tests.util.set_attrs_from_dict(self, mock_multiplexer(None))
+
+
+class TestMultiplexerExceptions(TestMultiplexer):
+
+    """
+    Test Multiplexer behavior when various exceptions are raised
+    """
 
     def test_multiplexer_control_in_use(self):
         """
@@ -141,6 +146,13 @@ class TestMultiplexer(unittest.TestCase):
             self.multiplexer.run()
         self.assertEqual(self.logger.exception.call_count, 1)
         self.uinput.close.assert_called_once_with()
+
+
+class TestMultiplexerLoop(TestMultiplexer):
+
+    """
+    Test Multiplexer's main loop
+    """
 
     @unittest.mock.patch('evdev.InputDevice')
     @unittest.mock.patch('evdev.list_devices')
