@@ -42,7 +42,7 @@ def mock_source(*args):
     Generate a Source with mocked attributes
     """
     (fake_inputdevice, fake_logger, fake_config_load) = args
-    fake_eventmap = {
+    fake_config = {
         100: {
             'alias':    'Foo',
             'code':     100,
@@ -81,7 +81,7 @@ def mock_source(*args):
         'fd':   tests.util.DEVICE_FD,
     }
     tests.util.set_attrs_from_dict(fake_inputdevice.return_value, device_attrs)
-    fake_config_load.return_value = fake_eventmap
+    fake_config_load.return_value = fake_config
     device = fake_inputdevice()
     return {
         'device':   device,

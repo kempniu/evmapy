@@ -23,7 +23,7 @@ Features
 
 - Works with any evdev-compatible input device, from a power button to a 6-axis joypad
 - Automatic input device configuration generation
-- Dynamic event map switching
+- Dynamic configuration switching
 - Adding and removing devices on-the-fly
 - Runs in foreground or as a daemon (using external software like ``start-stop-daemon``)
 - Supported events:
@@ -101,7 +101,7 @@ If all goes well, pressing any button on your input device will cause the defaul
 Configuration
 -------------
 
-Event maps are read from JSON files. You can generate an example configuration file automatically using the ``--generate DEVICE`` command line option. Each configuration file is a representation of an object with the following properties:
+Configuration is stored in JSON files. You can generate one automatically using the ``--generate DEVICE`` command line option. Each configuration file is a representation of an object with the following properties:
 
 - *axes*: list of input device axes *evmapy* will monitor, each of which must have exactly 2 actions assigned:
 
@@ -175,7 +175,7 @@ If all this sounds too complicated, here are some examples to clear things up:
 How do I...
 -----------
 
-- *...change the event map for a given device?*
+- *...change the configuration for a given device?*
 
   Use the ``--configure DEVICE:FILE`` command line option. ``FILE`` has to exist in ``~/.evmapy``. If you don't specify ``FILE``, default configuration will be restored for ``DEVICE``.
 

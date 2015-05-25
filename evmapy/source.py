@@ -55,7 +55,7 @@ class Source(object):
             'path': device.fn,
         }
         self._device = device
-        self._eventmap = {}
+        self._config = {}
         self._grabbed = False
         self._logger = logging.getLogger()
         self.load_config()
@@ -71,12 +71,12 @@ class Source(object):
         :raises evmapy.config.ConfigError: if an error occurred while
             loading the specified configuration file
         """
-        self._eventmap = evmapy.config.load(self._device, name)
-        if self._eventmap['grab'] is True and self._grabbed is False:
+        self._config = evmapy.config.load(self._device, name)
+        if self._config['grab'] is True and self._grabbed is False:
             self._device.grab()
             self._grabbed = True
             self._logger.info("%s: device grabbed", self.device['path'])
-        elif self._eventmap['grab'] is False and self._grabbed is True:
+        elif self._config['grab'] is False and self._grabbed is True:
             self._device.ungrab()
             self._grabbed = False
             self._logger.info("%s: device ungrabbed", self.device['path'])
@@ -107,9 +107,9 @@ class Source(object):
         pending = []
         for event in self._pending_events():
             self._logger.debug(event)
-            if event.code not in self._eventmap:
+            if event.code not in self._config:
                 continue
-            actions = self._eventmap[event.code]
+            actions = self._config[event.code]
             if event.type == evdev.ecodes.ecodes['EV_KEY']:
                 if event.value == evdev.KeyEvent.key_down:
                     direction = 'down'

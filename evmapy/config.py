@@ -174,7 +174,7 @@ def load(device, name):
     :param name: name of the configuration file to load (`None` and `''`
         cause the default configuration file to be used)
     :type name: str
-    :returns: event map generated from the loaded configuration file
+    :returns: processed configuration from the loaded configuration file
     :rtype: dict
     :raises evmapy.config.ConfigError: if an error occurred while
         loading the specified configuration file
@@ -185,12 +185,12 @@ def load(device, name):
     else:
         path = _get_device_config_path(device)
     try:
-        config = read(path)
-        eventmap = parse(config)
+        config_input = read(path)
+        config = parse(config_input)
     except Exception as exc:
         raise ConfigError(path, exc)
     logging.getLogger().info("%s: loaded %s", device.fn, path)
-    return eventmap
+    return config
 
 
 def read(path):
@@ -204,37 +204,37 @@ def read(path):
     :rtype: dict
     """
     with open(path) as config_file:
-        config = json.load(config_file)
-    return config
+        config_input = json.load(config_file)
+    return config_input
 
 
-def parse(config):
+def parse(config_input):
     """
-    Transform the given configuration dictionary into an event map.
+    Transform the given configuration dictionary into one ready to use
+    by the application.
 
-    :param config: configuration dictionary to process
-    :type config: dict
-    :returns: event map generated from the given configuration
-        dictionary
+    :param config_input: configuration dictionary to process
+    :type config_input: dict
+    :returns: processed configuration dictionary
     :rtype: dict
     """
-    eventmap = {}
+    config = {}
     # Every action needs a unique identifier in order for the event
     # multiplexer to be able to remove it from the list of delayed
     # actions; note that we can't directly compare the dictionaries as
     # there may be identical actions configured for two different events
     current_id = 0
-    eventmap['grab'] = config['grab']
-    # Transform lists into an event map keyed by event ID
-    for button in config['buttons']:
+    config['grab'] = config_input['grab']
+    # Transform lists into a configuration keyed by event ID
+    for button in config_input['buttons']:
         button['press']['id'] = current_id
         current_id += 1
-        eventmap[button['code']] = button
-    for axis in config['axes']:
+        config[button['code']] = button
+    for axis in config_input['axes']:
         for limit in ('min', 'max'):
             axis[limit]['id'] = current_id
             # Needed for proper handling of axis hysteresis
             axis[limit]['state'] = 'up'
             current_id += 1
-        eventmap[axis['code']] = axis
-    return eventmap
+        config[axis['code']] = axis
+    return config
