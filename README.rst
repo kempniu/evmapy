@@ -215,6 +215,38 @@ How do I...
 
   When running in the background, *evmapy* will output its messages to syslog (``LOG_DAEMON`` facility).
 
+- *...run it as a systemd service?*
+
+  You can use the following service file as a starting point:
+
+  ::
+
+    [Unit]
+    Description=evdev event mapper
+
+    [Service]
+    #User=nobody
+    ExecStart=/usr/bin/evmapy
+    ExecReload=/usr/bin/kill -HUP $MAINPID
+
+    [Install]
+    WantedBy=multi-user.target
+
+  This enables you to initiate a device rescan using ``systemctl reload evmapy``.
+
+- *...run it automatically when my X session starts?*
+
+  Put the following contents in ``/etc/xdg/autostart/evmapy.desktop``:
+
+  ::
+
+    [Desktop Entry]
+    Version=1.0
+    Type=Application
+    Name=evmapy
+    Comment=evdev event mapper
+    Exec=/usr/bin/evmapy
+
 Code maturity
 -------------
 
