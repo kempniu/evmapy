@@ -160,7 +160,6 @@ class TestConfig(unittest.TestCase):
         """
         self.check_parse_error({
             'trigger':  'Foo',
-            'sequence': False,
             'hold':     1.0 * -1,
             'type':     'key',
             'target':   'KEY_BACKSPACE',

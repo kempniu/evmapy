@@ -120,8 +120,6 @@ def generate(device):
         for (event_names, activator) in events:
             event_name = evmapy.util.first_element(event_names)
             action_base = {
-                'sequence': False,
-                'hold':     0.0,
                 'type':     'exec',
                 'target':   'echo %s' % event_name,
             }
@@ -228,6 +226,10 @@ def parse(config_input):
         'grab':     config_input['grab'],
         'map':      {},
     }
+    defaults = {
+        'hold':     0.0,
+        'sequence': False,
+    }
     # Every action needs a unique identifier in order for the event
     # multiplexer to be able to remove it from the list of delayed
     # actions; note that we can't directly compare the dictionaries as
@@ -245,6 +247,9 @@ def parse(config_input):
         config['events'][event['code']] = event
         config['map'][event['code']] = []
     for action in config_input['actions']:
+        for (parameter, default) in defaults.items():
+            if parameter not in action:
+                action[parameter] = default
         if action['hold'] < 0:
             raise ConfigError("hold time cannot be negative")
         if action['sequence'] and action['hold'] > 0:

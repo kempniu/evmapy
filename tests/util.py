@@ -30,43 +30,33 @@ FAKE_CONFIG = {
     'actions': [
         {
             'trigger':  'Foo:min',
-            'sequence': False,
-            'hold':     0.0,
             'type':     'key',
             'target':   'KEY_LEFT',
         },
         {
             'trigger':  'Foo:max',
-            'sequence': False,
-            'hold':     0.0,
             'type':     'key',
             'target':   'KEY_RIGHT',
         },
         {
             'trigger':  'Bar',
-            'sequence': False,
-            'hold':     0.0,
             'type':     'key',
             'target':   'KEY_ENTER',
         },
         {
             'trigger':  ['Foobar', 'Foobaz'],
-            'sequence': False,
-            'hold':     0.0,
             'type':     'key',
             'target':   'KEY_ESC',
         },
         {
             'trigger':  ['Foofoo:max', 'Foofoo:max'],
             'sequence': True,
-            'hold':     0.0,
             'type':     'key',
             'target':   ['KEY_UP', 'KEY_DOWN'],
         },
         {
             'trigger':  ['Barbar:min', 'Bazbaz:max'],
             'sequence': True,
-            'hold':     0.0,
             'type':     'key',
             'target':   'KEY_SPACE',
         },

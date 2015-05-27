@@ -106,11 +106,9 @@ Configuration
 
 Configuration is stored in JSON files. You can generate one automatically using the ``--generate DEVICE`` command line option. Each configuration file is a representation of an object with the following properties:
 
-- *actions*: actions to take in response to events; each action must have all of the following properties defined:
+- *actions*: actions to take in response to events; each action has the following properties:
 
   - *trigger*: value(s) of the *name* property(-ies) of the event(s) which trigger(s) this action (*:min* or *:max* suffix is required for axes),
-  - *sequence*: if set to *true*, *trigger* will be treated as a sequence of events; otherwise, *trigger* will be treated as a combination of events,
-  - *hold*: if set to a positive value (which is only allowed when *sequence* is *false*), this action will only be triggered once all events listed in *trigger* will have been active for the given number of seconds; otherwise, it will be triggered immediately; this value is a floating point number, i.e. fractions of seconds can be used,
   - *type*:
 
     - *key*: event(s) will be translated to a key press,
@@ -120,6 +118,9 @@ Configuration is stored in JSON files. You can generate one automatically using 
 
     - if *type* is *key*: the key(s) to "press" (see ``/usr/include/linux/input.h`` for a list of valid values),
     - if *type* is *exec*: the command(s) to run,
+
+  - *(optional) sequence*: if set to *true*, *trigger* will be treated as a sequence of events; otherwise, *trigger* will be treated as a combination of events; defaults to *false*,
+  - *(optional) hold*: if set to a positive value (which is only allowed when *sequence* is *false*), this action will only be triggered once all events listed in *trigger* will have been active for the given number of seconds; otherwise, it will be triggered immediately; this value is a floating point number, i.e. fractions of seconds can be used; defaults to *0* (i.e. immediate triggering),
 
 - *axes*: list of input device axes, each of which must have all of the following properties assigned:
 
@@ -146,8 +147,6 @@ If all this sounds too complicated, here are some examples to clear things up:
     "actions": [
         {
             "trigger": "Button 1",
-            "sequence": false,
-            "hold": 0.0,
             "type": "key",
             "target": [ "KEY_LEFTALT", "KEY_ENTER" ]
         },
@@ -168,7 +167,6 @@ If all this sounds too complicated, here are some examples to clear things up:
     "actions": [
         {
             "trigger": "Right analog stick (horizontal):min",
-            "sequence": false,
             "hold": 1.0,
             "type": "exec",
             "target": "shutdown -h now"
@@ -192,8 +190,6 @@ If all this sounds too complicated, here are some examples to clear things up:
     "actions": [
         {
             "trigger": [ "SHIFT", "Q" ],
-            "sequence": false,
-            "hold": 0.0,
             "type": "key",
             "target": "KEY_ESC"
         },
@@ -219,7 +215,6 @@ If all this sounds too complicated, here are some examples to clear things up:
         {
             "trigger": [ "L-R:min", "U-D:min", "L-R:max", "U-D:max" ],
             "sequence": true,
-            "hold": 0.0,
             "type": "key",
             "target": [ "KEY_LEFTALT", "KEY_LEFTCTRL", "KEY_DELETE" ]
         },
