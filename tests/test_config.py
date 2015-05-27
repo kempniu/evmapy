@@ -169,5 +169,3 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(len(config['map'][100]), 2)
         self.assertEqual(len(config['map'][200]), 1)
         self.assertEqual(len(config['map'][300]), 0)
-        ids = [a['id'] for actions in config['map'].values() for a in actions]
-        self.assertEqual(len(set(ids)), len(ids))

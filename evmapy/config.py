@@ -240,9 +240,12 @@ def parse(config_input):
         config['events'][event['code']] = event
         config['map'][event['code']] = []
     for action in config_input['actions']:
-        event_name = action['trigger'].split(':')[0]
-        event = next(e for e in events if e['name'] == event_name)
-        config['map'][event['code']].append(action)
+        action['trigger'] = evmapy.util.as_list(action['trigger'])
+        action['trigger_active'] = [False for trigger in action['trigger']]
+        for trigger in action['trigger']:
+            event_name = trigger.split(':')[0]
+            event = next(e for e in events if e['name'] == event_name)
+            config['map'][event['code']].append(action)
         action['id'] = current_id
         current_id += 1
     return config

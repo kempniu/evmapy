@@ -46,6 +46,12 @@ FAKE_CONFIG = {
             'type':     'key',
             'target':   'KEY_ENTER',
         },
+        {
+            'trigger':  ['Foobar', 'Foobaz'],
+            'hold':     False,
+            'type':     'key',
+            'target':   'KEY_ESC',
+        },
     ],
     'axes': [
         {
@@ -59,6 +65,14 @@ FAKE_CONFIG = {
         {
             'name':     'Bar',
             'code':     200,
+        },
+        {
+            'name':     'Foobar',
+            'code':     201,
+        },
+        {
+            'name':     'Foobaz',
+            'code':     202,
         },
         {
             'name':     'Baz',

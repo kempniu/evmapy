@@ -40,6 +40,8 @@ Features
 
   - single event, immediate
   - single event, hold
+  - combined events, immediate
+  - combined events, hold
 
 Installation
 ------------
@@ -105,12 +107,12 @@ Configuration is stored in JSON files. You can generate one automatically using 
 
 - *actions*: actions to take in response to events; each action must have all of the following properties defined:
 
-  - *trigger*: value of the *name* property of the event which triggers this action (*:min* or *:max* suffix is required for axes),
-  - *hold*: if set to *true*, this action will only be triggered after keeping the key/button pressed or an analog stick tilted for 1 second; otherwise, it will be triggered immediately,
+  - *trigger*: value(s) of the *name* property(-ies) of the event(s) which trigger(s) this action (*:min* or *:max* suffix is required for axes),
+  - *hold*: if set to *true*, this action will only be triggered once all events listed in *trigger* will have been active for 1 second; otherwise, it will be triggered immediately,
   - *type*:
 
-    - *key*: event will be translated to a key press,
-    - *exec*: event will cause an external program to be executed,
+    - *key*: event(s) will be translated to a key press,
+    - *exec*: event(s) will cause an external program to be executed,
 
   - *target*:
 
@@ -175,6 +177,31 @@ If all this sounds too complicated, here are some examples to clear things up:
             "code": 4,
             "min": 0,
             "max": 255
+        },
+    ...
+    ]
+
+- Translate *SHIFT+Q* presses to *ESC* presses
+
+  ::
+
+    "actions": [
+        {
+            "trigger": [ "SHIFT", "Q" ],
+            "hold": false,
+            "type": "key",
+            "target": "KEY_ESC"
+        },
+    ...
+    ],
+    "buttons": [
+        {
+            "name": "SHIFT",
+            "code": 42
+        },
+        {
+            "name": "Q",
+            "code": 16
         },
     ...
     ]

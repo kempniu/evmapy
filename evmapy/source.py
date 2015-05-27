@@ -101,8 +101,20 @@ class Source(object):
             if not event_name:
                 continue
             for action in self._config['map'][event.code]:
-                if event_name == action['trigger']:
-                    pending.append((action, 'down' if event_active else 'up'))
+                try:
+                    event_index = action['trigger'].index(event_name)
+                except ValueError:
+                    # event is ':min' but we're looking for ':max' or
+                    # vice versa
+                    continue
+                if event_active:
+                    action['trigger_active'][event_index] = True
+                    if all(action['trigger_active']):
+                        pending.append((action, 'down'))
+                else:
+                    if all(action['trigger_active']):
+                        pending.append((action, 'up'))
+                    action['trigger_active'][event_index] = False
         return pending
 
     def _pending_events(self):
