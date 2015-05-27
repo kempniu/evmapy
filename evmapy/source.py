@@ -88,48 +88,21 @@ class Source(object):
         :returns: list of actions to be performed
         :rtype: list
         """
-
-        def _perform_axis_action(limit, direction):
-            """
-            Set the current state (i.e. direction) of the given action
-            and then perform it in the given direction.
-
-            :param limit: whether to perform this axis' `min` or `max`
-                action
-            :type limit: str
-            :param direction: which direction to perform the action in
-            :type direction: str
-            :returns: None
-            """
-            actions[limit]['state'] = direction
-            pending.append((actions[limit], direction))
-
         pending = []
         for event in self._pending_events():
             self._logger.debug(event)
-            if event.code not in self._config:
+            supported_events = [
+                evdev.ecodes.ecodes['EV_ABS'],
+                evdev.ecodes.ecodes['EV_KEY'],
+            ]
+            if event.type not in supported_events:
                 continue
-            actions = self._config[event.code]
-            if event.type == evdev.ecodes.ecodes['EV_KEY']:
-                if event.value == evdev.KeyEvent.key_down:
-                    direction = 'down'
-                elif event.value == evdev.KeyEvent.key_up:
-                    direction = 'up'
-                elif event.value == evdev.KeyEvent.key_hold:
-                    continue
-                pending.append((actions['press'], direction))
-            elif event.type == evdev.ecodes.ecodes['EV_ABS']:
-                if (event.value <= actions['min']['value'] and
-                        actions['min']['state'] == 'up'):
-                    _perform_axis_action('min', 'down')
-                elif (event.value >= actions['max']['value'] and
-                      actions['max']['state'] == 'up'):
-                    _perform_axis_action('max', 'down')
-                else:
-                    for limit in ('min', 'max'):
-                        if actions[limit]['state'] == 'down':
-                            _perform_axis_action(limit, 'up')
-
+            (event_name, event_active) = self._normalize_event(event)
+            if not event_name:
+                continue
+            for action in self._config['map'][event.code]:
+                if event_name == action['trigger']:
+                    pending.append((action, 'down' if event_active else 'up'))
         return pending
 
     def _pending_events(self):
@@ -150,3 +123,44 @@ class Source(object):
                 raise DeviceRemovedException()
             else:
                 raise
+
+    def _normalize_event(self, event):
+        """
+        Translate an event structure into a tuple containing the
+        normalized name of the event and its new state (active or not).
+
+        :param event: event to process
+        :type event: evdev.events.InputEvent
+        :returns: normalized event name and event state
+        :rtype: tuple
+        """
+        retval = (None, None)
+        try:
+            event_info = self._config['events'][event.code]
+        except KeyError:
+            return retval
+        name = event_info['name']
+        previous = event_info['previous']
+        current = event.value
+        if 'min' in event_info and 'max' in event_info:
+            # Axis event
+            minimum = event_info['min']
+            maximum = event_info['max']
+            if previous > minimum and current <= minimum:
+                retval = (name + ':min', True)
+            elif previous <= minimum and current > minimum:
+                retval = (name + ':min', False)
+            elif previous < maximum and current >= maximum:
+                retval = (name + ':max', True)
+            elif previous >= maximum and current < maximum:
+                retval = (name + ':max', False)
+        else:
+            # Button event
+            if current == evdev.KeyEvent.key_hold:
+                return retval
+            elif current > previous:
+                retval = (name, True)
+            else:
+                retval = (name, False)
+        event_info['previous'] = current
+        return retval

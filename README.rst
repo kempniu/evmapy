@@ -103,34 +103,35 @@ Configuration
 
 Configuration is stored in JSON files. You can generate one automatically using the ``--generate DEVICE`` command line option. Each configuration file is a representation of an object with the following properties:
 
-- *axes*: list of input device axes *evmapy* will monitor, each of which must have exactly 2 actions assigned:
+- *actions*: actions to take in response to events; each action must have all of the following properties defined:
 
-  - *min*: performed when the value of this axis is the lowest possible one,
-  - *max*: performed when the value of this axis is the highest possible one,
+  - *trigger*: value of the *name* property of the event which triggers this action (*:min* or *:max* suffix is required for axes),
+  - *hold*: if set to *true*, this action will only be triggered after keeping the key/button pressed or an analog stick tilted for 1 second; otherwise, it will be triggered immediately,
+  - *type*:
 
-- *buttons*: list of input device keys/buttons *evmapy* will monitor, each of which must have only a single *press* action assigned,
-- *grab*: set it to *true* if you want *evmapy* to become the only recipient of the events emitted by this input device.
+    - *key*: event will be translated to a key press,
+    - *exec*: event will cause an external program to be executed,
 
-**NOTE:** Don't forget that a typical analog stick on a joypad consists of 2 axes (horizontal and vertical)!
+  - *target*:
 
-Each action has 3 parameters you can set (don't touch the rest unless you know what you're doing):
+    - if *type* is *key*: the key(s) to "press" (see ``/usr/include/linux/input.h`` for a list of valid values),
+    - if *type* is *exec*: the command(s) to run,
 
-- *type*:
+- *axes*: list of input device axes, each of which must have all of the following properties assigned:
 
-  - *key*: event will be translated to a key press,
-  - *exec*: event will cause an external program to be executed,
+  - *name*: user-friendly name of this axis,
+  - *code*: don't touch it (*evmapy* relies on it for proper functioning),
+  - *min*: lowest possible value of this axis,
+  - *max*: highest possible value of this axis,
 
-- *target*:
+  **NOTE:** Don't forget that a typical analog stick on a joypad consists of 2 axes (horizontal and vertical)!
 
-  - if *type* is *key*: the key(s) to "press" (see ``/usr/include/linux/input.h`` for a list of valid values),
-  - if *type* is *exec*: the command(s) to run,
+- *buttons*: list of input device keys/buttons, each of which must have all of the following properties assigned:
 
-- *hold*: if set to *true*, this action will only be triggered after keeping the key/button pressed or an analog stick tilted for 1 second; otherwise, it will be triggered immediately.
+  - *name*: see *axes*,
+  - *code*: see *axes*,
 
-Each axis and button has 2 more properties:
-
-- *alias*: set it to whatever you want to (stay JSON compliant, though!),
-- *code*: don't touch it (*evmapy* relies on it for proper functioning).
+- *grab*: if set to *true*, *evmapy* will become the only recipient of the events emitted by this input device.
 
 If all this sounds too complicated, here are some examples to clear things up:
 
@@ -138,15 +139,19 @@ If all this sounds too complicated, here are some examples to clear things up:
 
   ::
 
+    "actions": [
+        {
+            "trigger": "Button 1",
+            "hold": false,
+            "type": "key",
+            "target": [ "KEY_LEFTALT", "KEY_ENTER" ]
+        },
+    ...
+    ],
     "buttons": [
         {
-            "alias": "Button 1",
-            "code": 304,
-            "press": {
-                "type": "key"
-                "target": [ "KEY_LEFTALT", "KEY_ENTER" ],
-                "hold": false,
-            }
+            "name": "Button 1",
+            "code": 304
         },
     ...
     ]
@@ -155,16 +160,21 @@ If all this sounds too complicated, here are some examples to clear things up:
 
   ::
 
+    "actions": [
+        {
+            "trigger": "Right analog stick (horizontal):min",
+            "hold": true,
+            "type": "exec",
+            "target": "shutdown -h now"
+        },
+    ...
+    ],
     "axes": [
         {
-            "alias": "Right analog stick (horizontal)",
+            "name": "Right analog stick (horizontal)",
             "code": 4,
-            "min": {
-                "type": "exec",
-                "target": "shutdown -h now",
-                "hold": true,
-                "value": 0
-            }
+            "min": 0,
+            "max": 255
         },
     ...
     ]

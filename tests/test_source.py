@@ -78,6 +78,8 @@ class TestSource(unittest.TestCase):
         Check if Source properly translates all events
         """
         event_list = [
+            (evdev.ecodes.ecodes['EV_SYN'], 0, 0),
+            (evdev.ecodes.ecodes['EV_KEY'], 400, evdev.KeyEvent.key_down),
             (evdev.ecodes.ecodes['EV_KEY'], 300, evdev.KeyEvent.key_down),
             (evdev.ecodes.ecodes['EV_KEY'], 200, evdev.KeyEvent.key_down),
             (evdev.ecodes.ecodes['EV_KEY'], 200, evdev.KeyEvent.key_hold),

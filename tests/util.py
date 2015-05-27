@@ -27,33 +27,42 @@ import copy
 CONTROL_FD = 1
 DEVICE_FD = 2
 FAKE_CONFIG = {
+    'actions': [
+        {
+            'trigger':  'Foo:min',
+            'hold':     False,
+            'type':     'key',
+            'target':   'KEY_LEFT',
+        },
+        {
+            'trigger':  'Foo:max',
+            'hold':     False,
+            'type':     'key',
+            'target':   'KEY_RIGHT',
+        },
+        {
+            'trigger':  'Bar',
+            'hold':     False,
+            'type':     'key',
+            'target':   'KEY_ENTER',
+        },
+    ],
     'axes': [
         {
-            'alias':        'Foo',
-            'code':         100,
-            'min': {
-                'value':    0,
-                'hold':     False,
-                'type':     'key',
-                'target':   'KEY_LEFT',
-            },
-            'max': {
-                'value':    255,
-                'hold':     False,
-                'type':     'key',
-                'target':   'KEY_RIGHT',
-            },
+            'name':     'Foo',
+            'code':     100,
+            'min':      0,
+            'max':      255,
         },
     ],
     'buttons': [
         {
-            'alias':        'Bar',
-            'code':         200,
-            'press': {
-                'hold':     False,
-                'type':     'key',
-                'target':   'KEY_ENTER',
-            },
+            'name':     'Bar',
+            'code':     200,
+        },
+        {
+            'name':     'Baz',
+            'code':     300,
         },
     ],
     'grab': False,

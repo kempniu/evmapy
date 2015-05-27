@@ -109,6 +109,7 @@ def generate(device):
     """
     config = {
         'grab':     False,
+        'actions':  [],
         'axes':     [],
         'buttons':  [],
     }
@@ -116,32 +117,31 @@ def generate(device):
     for ((_, event_type_id), events) in capabilities.items():
         for (event_names, activator) in events:
             event_name = evmapy.util.first_element(event_names)
-            action = {
+            action_base = {
                 'hold':     False,
                 'type':     'exec',
                 'target':   'echo %s' % event_name,
             }
             if event_type_id == evdev.ecodes.ecodes['EV_KEY']:
                 config['buttons'].append({
-                    'alias':    event_name,
-                    'code':     activator,
-                    'press':    action,
+                    'name': event_name,
+                    'code': activator,
                 })
+                action = action_base.copy()
+                action['trigger'] = event_name
+                config['actions'].append(action)
             elif event_type_id == evdev.ecodes.ecodes['EV_ABS']:
-                actions = {
-                    'min':  action.copy(),
-                    'max':  action.copy(),
-                }
-                actions['min']['value'] = activator.min
-                actions['min']['target'] += ' min'
-                actions['max']['value'] = activator.max
-                actions['max']['target'] += ' max'
                 config['axes'].append({
-                    'alias':    event_name,
-                    'code':     event_names[1],
-                    'min':      actions['min'],
-                    'max':      actions['max'],
+                    'name': event_name,
+                    'code': event_names[1],
+                    'min':  activator.min,
+                    'max':  activator.max,
                 })
+                for limit in ('min', 'max'):
+                    action = action_base.copy()
+                    action['trigger'] = '%s:%s' % (event_name, limit)
+                    action['target'] += ' %s' % limit
+                    config['actions'].append(action)
     return config
 
 
@@ -218,23 +218,31 @@ def parse(config_input):
     :returns: processed configuration dictionary
     :rtype: dict
     """
-    config = {}
+    config = {
+        'events':   {},
+        'grab':     config_input['grab'],
+        'map':      {},
+    }
     # Every action needs a unique identifier in order for the event
     # multiplexer to be able to remove it from the list of delayed
     # actions; note that we can't directly compare the dictionaries as
     # there may be identical actions configured for two different events
     current_id = 0
-    config['grab'] = config_input['grab']
-    # Transform lists into a configuration keyed by event ID
-    for button in config_input['buttons']:
-        button['press']['id'] = current_id
+    events = config_input['axes'] + config_input['buttons']
+    for event in events:
+        if 'min' in event and 'max' in event:
+            # Axis event
+            idle = (event['min'] + event['max']) // 2
+        else:
+            # Button event
+            idle = 0
+        event['previous'] = idle
+        config['events'][event['code']] = event
+        config['map'][event['code']] = []
+    for action in config_input['actions']:
+        event_name = action['trigger'].split(':')[0]
+        event = next(e for e in events if e['name'] == event_name)
+        config['map'][event['code']].append(action)
+        action['id'] = current_id
         current_id += 1
-        config[button['code']] = button
-    for axis in config_input['axes']:
-        for limit in ('min', 'max'):
-            axis[limit]['id'] = current_id
-            # Needed for proper handling of axis hysteresis
-            axis[limit]['state'] = 'up'
-            current_id += 1
-        config[axis['code']] = axis
     return config

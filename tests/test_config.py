@@ -165,10 +165,9 @@ class TestConfig(unittest.TestCase):
         fake_device.fn = '/dev/input/event0'
         with unittest.mock.patch('evmapy.config.open', fake_open, create=True):
             config = evmapy.config.load(fake_device, None)
-        self.assertSetEqual(set(config.keys()), set([100, 200, 'grab']))
-        ids = [
-            config[100]['min']['id'],
-            config[100]['max']['id'],
-            config[200]['press']['id'],
-        ]
+        self.assertSetEqual(set(config.keys()), set(['events', 'grab', 'map']))
+        self.assertEqual(len(config['map'][100]), 2)
+        self.assertEqual(len(config['map'][200]), 1)
+        self.assertEqual(len(config['map'][300]), 0)
+        ids = [a['id'] for actions in config['map'].values() for a in actions]
         self.assertEqual(len(set(ids)), len(ids))
