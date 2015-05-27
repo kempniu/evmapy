@@ -30,39 +30,7 @@ import unittest.mock
 import evmapy.config
 import evmapy.util
 
-
-FAKE_CONFIG = {
-    'axes': [
-        {
-            'alias':    'Foo',
-            'code':     1,
-            'min': {
-                'value':    0,
-                'hold':     False,
-                'type':     'key',
-                'target':   'KEY_LEFT',
-            },
-            'max': {
-                'value':    255,
-                'hold':     False,
-                'type':     'key',
-                'target':   'KEY_RIGHT',
-            },
-        },
-    ],
-    'buttons': [
-        {
-            'alias':    'Bar',
-            'code':     2,
-            'press': {
-                'hold':     False,
-                'type':     'key',
-                'target':   'KEY_SPACE',
-            },
-        },
-    ],
-    'grab': False,
-}
+import tests.util
 
 
 class TestConfig(unittest.TestCase):
@@ -137,11 +105,11 @@ class TestConfig(unittest.TestCase):
         info = evmapy.util.get_app_info()
         fake_mkdir.side_effect = FileExistsError()
         with tempfile.NamedTemporaryFile(mode='w+') as temp:
-            evmapy.config.save(temp.name, FAKE_CONFIG)
+            evmapy.config.save(temp.name, tests.util.get_fake_config())
             temp.seek(0)
             config = json.load(temp)
         fake_mkdir.assert_called_once_with(info['config_dir'])
-        self.assertDictEqual(FAKE_CONFIG, config)
+        self.assertDictEqual(tests.util.get_fake_config(), config)
 
     @unittest.mock.patch('evmapy.config.read')
     def check_load_error(self, *args):
@@ -190,17 +158,17 @@ class TestConfig(unittest.TestCase):
         """
         Test load() with a valid, default configuration file
         """
-        fake_config_json = json.dumps(FAKE_CONFIG)
+        fake_config_json = json.dumps(tests.util.get_fake_config())
         fake_open = unittest.mock.mock_open(read_data=fake_config_json)
         fake_device = unittest.mock.Mock()
         fake_device.name = 'Foo Bar'
         fake_device.fn = '/dev/input/event0'
         with unittest.mock.patch('evmapy.config.open', fake_open, create=True):
             config = evmapy.config.load(fake_device, None)
-        self.assertSetEqual(set(config.keys()), set([1, 2, 'grab']))
+        self.assertSetEqual(set(config.keys()), set([100, 200, 'grab']))
         ids = [
-            config[1]['min']['id'],
-            config[1]['max']['id'],
-            config[2]['press']['id'],
+            config[100]['min']['id'],
+            config[100]['max']['id'],
+            config[200]['press']['id'],
         ]
         self.assertEqual(len(set(ids)), len(ids))

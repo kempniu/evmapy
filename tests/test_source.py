@@ -42,45 +42,13 @@ def mock_source(*args):
     Generate a Source with mocked attributes
     """
     (fake_inputdevice, fake_logger, fake_config_load) = args
-    fake_config = {
-        100: {
-            'alias':    'Foo',
-            'code':     100,
-            'min': {
-                'id':       1,
-                'value':    0,
-                'hold':     False,
-                'type':     'key',
-                'target':   'KEY_LEFT',
-                'state':    'up',
-            },
-            'max': {
-                'id':       2,
-                'value':    255,
-                'hold':     False,
-                'type':     'key',
-                'target':   'KEY_RIGHT',
-                'state':    'up',
-            },
-        },
-        200: {
-            'alias':    'Bar',
-            'code':     200,
-            'press': {
-                'id':       3,
-                'hold':     False,
-                'type':     'key',
-                'target':   'KEY_ENTER',
-            },
-        },
-        'grab': False,
-    }
     device_attrs = {
         'name': 'Foo Bar',
         'fn':   '/dev/input/event0',
         'fd':   tests.util.DEVICE_FD,
     }
     tests.util.set_attrs_from_dict(fake_inputdevice.return_value, device_attrs)
+    fake_config = evmapy.config.parse(tests.util.get_fake_config())
     fake_config_load.return_value = fake_config
     device = fake_inputdevice()
     return {

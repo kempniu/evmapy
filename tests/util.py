@@ -21,8 +21,51 @@
 Constants and functions used by test modules
 """
 
+import copy
+
+
 CONTROL_FD = 1
 DEVICE_FD = 2
+FAKE_CONFIG = {
+    'axes': [
+        {
+            'alias':        'Foo',
+            'code':         100,
+            'min': {
+                'value':    0,
+                'hold':     False,
+                'type':     'key',
+                'target':   'KEY_LEFT',
+            },
+            'max': {
+                'value':    255,
+                'hold':     False,
+                'type':     'key',
+                'target':   'KEY_RIGHT',
+            },
+        },
+    ],
+    'buttons': [
+        {
+            'alias':        'Bar',
+            'code':         200,
+            'press': {
+                'hold':     False,
+                'type':     'key',
+                'target':   'KEY_ENTER',
+            },
+        },
+    ],
+    'grab': False,
+}
+
+
+def get_fake_config():
+    """
+    Return a deep copy of the fake configuration dictionary. Needed
+    because evmapy.config.parse() modifies the dictionary passed to it.
+    """
+    return copy.deepcopy(FAKE_CONFIG)
 
 
 def set_attrs_from_dict(obj, attrs):
