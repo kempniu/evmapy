@@ -38,14 +38,14 @@ FAKE_CONFIG = {
             'code':     1,
             'min': {
                 'value':    0,
+                'hold':     False,
                 'type':     'key',
-                'trigger':  'normal',
                 'target':   'KEY_LEFT',
             },
             'max': {
                 'value':    255,
+                'hold':     False,
                 'type':     'key',
-                'trigger':  'normal',
                 'target':   'KEY_RIGHT',
             },
         },
@@ -55,8 +55,8 @@ FAKE_CONFIG = {
             'alias':    'Bar',
             'code':     2,
             'press': {
+                'hold':     False,
                 'type':     'key',
-                'trigger':  'normal',
                 'target':   'KEY_SPACE',
             },
         },

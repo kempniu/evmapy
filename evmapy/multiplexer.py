@@ -262,7 +262,7 @@ class Multiplexer(object):
         """
         for (action, direction) in actions:
             self._logger.debug("action=%s, direction=%s", action, direction)
-            if action['trigger'] == 'normal':
+            if not action['hold']:
                 if direction == 'down':
                     if action['type'] == 'key':
                         self._uinput_synthesize(action, press=True)
@@ -271,7 +271,7 @@ class Multiplexer(object):
                 else:
                     if action['type'] == 'key':
                         self._uinput_synthesize(action, press=False)
-            elif action['trigger'] == 'long':
+            else:
                 if direction == 'down':
                     # Schedule delayed action to trigger after 1 second
                     action['when'] = time.time() + 1

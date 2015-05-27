@@ -242,12 +242,12 @@ class TestMultiplexerLoop(TestMultiplexerBase):
 
     def test_multiplexer_normal_key(self):
         """
-        Check key action with normal trigger
+        Check key action without hold
         """
         action = {
             'id':       1,
+            'hold':     False,
             'type':     'key',
-            'trigger':  'normal',
             'target':   'KEY_ENTER',
         }
         poll_device = (True, True)
@@ -256,12 +256,12 @@ class TestMultiplexerLoop(TestMultiplexerBase):
 
     def test_multiplexer_normal_exec(self):
         """
-        Check exec action with normal trigger
+        Check exec action without hold
         """
         action = {
             'id':       1,
+            'hold':     False,
             'type':     'exec',
-            'trigger':  'normal',
             'target':   'foo',
         }
         poll_device = (True, True)
@@ -270,12 +270,12 @@ class TestMultiplexerLoop(TestMultiplexerBase):
 
     def test_multiplexer_long_key_full(self):
         """
-        Check key action with long trigger, action is performed
+        Check key action with hold, action is performed
         """
         action = {
             'id':       1,
+            'hold':     True,
             'type':     'key',
-            'trigger':  'long',
             'target':   'KEY_ENTER',
         }
         poll_device = (True, False, False, True)
@@ -284,12 +284,12 @@ class TestMultiplexerLoop(TestMultiplexerBase):
 
     def test_multiplexer_long_exec_full(self):
         """
-        Check exec action with long trigger, action is performed
+        Check exec action with hold, action is performed
         """
         action = {
             'id':       1,
+            'hold':     True,
             'type':     'exec',
-            'trigger':  'long',
             'target':   'foo',
         }
         poll_device = (True, False, True)
@@ -298,12 +298,12 @@ class TestMultiplexerLoop(TestMultiplexerBase):
 
     def test_multiplexer_long_key_stop(self):
         """
-        Check key action with long trigger, action is cancelled
+        Check key action with hold, action is cancelled
         """
         action = {
             'id':       1,
+            'hold':     True,
             'type':     'key',
-            'trigger':  'long',
             'target':   'KEY_ENTER',
         }
         poll_device = (True, True)
@@ -312,12 +312,12 @@ class TestMultiplexerLoop(TestMultiplexerBase):
 
     def test_multiplexer_long_exec_stop(self):
         """
-        Check exec action with long trigger, action is cancelled
+        Check exec action with hold, action is cancelled
         """
         action = {
             'id':       1,
+            'hold':     True,
             'type':     'exec',
-            'trigger':  'long',
             'target':   'foo',
         }
         poll_device = (True, True)
@@ -326,14 +326,14 @@ class TestMultiplexerLoop(TestMultiplexerBase):
 
     def test_multiplexer_no_uinput(self):
         """
-        Check key action with normal trigger when /dev/uinput was not
-        opened correctly
+        Check key action without hold when /dev/uinput was not opened
+        correctly
         """
         tests.util.set_attrs_from_dict(self, mock_multiplexer('uinput'))
         action = {
             'id':       1,
+            'hold':     False,
             'type':     'key',
-            'trigger':  'normal',
             'target':   'KEY_ENTER',
         }
         poll_device = (True, True)

@@ -117,7 +117,7 @@ def generate(device):
         for (event_names, activator) in events:
             event_name = evmapy.util.first_element(event_names)
             action = {
-                'trigger':  'normal',
+                'hold':     False,
                 'type':     'exec',
                 'target':   'echo %s' % event_name,
             }

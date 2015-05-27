@@ -49,16 +49,16 @@ def mock_source(*args):
             'min': {
                 'id':       1,
                 'value':    0,
+                'hold':     False,
                 'type':     'key',
-                'trigger':  'normal',
                 'target':   'KEY_LEFT',
                 'state':    'up',
             },
             'max': {
                 'id':       2,
                 'value':    255,
+                'hold':     False,
                 'type':     'key',
-                'trigger':  'normal',
                 'target':   'KEY_RIGHT',
                 'state':    'up',
             },
@@ -68,8 +68,8 @@ def mock_source(*args):
             'code':     200,
             'press': {
                 'id':       3,
+                'hold':     False,
                 'type':     'key',
-                'trigger':  'normal',
                 'target':   'KEY_ENTER',
             },
         },

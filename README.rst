@@ -38,8 +38,8 @@ Features
 
 - Supported action triggering modes:
 
-  - press
-  - hold
+  - single event, immediate
+  - single event, hold
 
 Installation
 ------------
@@ -125,10 +125,7 @@ Each action has 3 parameters you can set (don't touch the rest unless you know w
   - if *type* is *key*: the key(s) to "press" (see ``/usr/include/linux/input.h`` for a list of valid values),
   - if *type* is *exec*: the command(s) to run,
 
-- *trigger*:
-
-  - *normal*: action will be performed immediately,
-  - *long*: action will only be performed once the event has been active for 1 second (i.e. you keep a key/button pressed or an analog stick tilted for that long).
+- *hold*: if set to *true*, this action will only be triggered after keeping the key/button pressed or an analog stick tilted for 1 second; otherwise, it will be triggered immediately.
 
 Each axis and button has 2 more properties:
 
@@ -148,7 +145,7 @@ If all this sounds too complicated, here are some examples to clear things up:
             "press": {
                 "type": "key"
                 "target": [ "KEY_LEFTALT", "KEY_ENTER" ],
-                "trigger": "normal",
+                "hold": false,
             }
         },
     ...
@@ -165,7 +162,7 @@ If all this sounds too complicated, here are some examples to clear things up:
             "min": {
                 "type": "exec",
                 "target": "shutdown -h now",
-                "trigger": "long",
+                "hold": true,
                 "value": 0
             }
         },
