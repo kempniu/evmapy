@@ -143,22 +143,41 @@ class TestConfig(unittest.TestCase):
         self.check_load_error(Exception())
 
     @unittest.mock.patch('evmapy.config.read')
-    def test_config_parse_hold(self, fake_read):
+    def check_parse_error(self, *args):
+        """
+        Check parse() behavior when configuration contains errors
+        """
+        (extra_action, fake_read) = args
+        bad_config = tests.util.get_fake_config()
+        bad_config['actions'].append(extra_action)
+        fake_read.return_value = bad_config
+        with self.assertRaises(evmapy.config.ConfigError):
+            evmapy.config.load(unittest.mock.Mock(), 'Foo.Bar.json')
+
+    def test_config_parse_hold(self):
+        """
+        Check parse() behavior when action's hold time is negative
+        """
+        self.check_parse_error({
+            'trigger':  'Foo',
+            'sequence': False,
+            'hold':     1.0 * -1,
+            'type':     'key',
+            'target':   'KEY_BACKSPACE',
+        })
+
+    def test_config_parse_hold_seq(self):
         """
         Check parse() behavior when contradicting properties are set for
         an action
         """
-        bad_config = tests.util.get_fake_config()
-        bad_config['actions'].append({
+        self.check_parse_error({
             'trigger':  ['Foo:min', 'Foo:max'],
             'sequence': True,
-            'hold':     True,
+            'hold':     1.0,
             'type':     'key',
             'target':   'KEY_BACKSPACE',
         })
-        fake_read.return_value = bad_config
-        with self.assertRaises(evmapy.config.ConfigError):
-            evmapy.config.load(unittest.mock.Mock(), 'Foo.Bar.json')
 
     @unittest.mock.patch('logging.getLogger')
     @unittest.mock.patch('evmapy.config.read')

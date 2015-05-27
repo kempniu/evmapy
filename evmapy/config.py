@@ -121,7 +121,7 @@ def generate(device):
             event_name = evmapy.util.first_element(event_names)
             action_base = {
                 'sequence': False,
-                'hold':     False,
+                'hold':     0.0,
                 'type':     'exec',
                 'target':   'echo %s' % event_name,
             }
@@ -245,8 +245,10 @@ def parse(config_input):
         config['events'][event['code']] = event
         config['map'][event['code']] = []
     for action in config_input['actions']:
-        if action['sequence'] and action['hold']:
-            raise ConfigError("'hold' cannot be set for sequences")
+        if action['hold'] < 0:
+            raise ConfigError("hold time cannot be negative")
+        if action['sequence'] and action['hold'] > 0:
+            raise ConfigError("hold time cannot be positive for sequences")
         action['trigger'] = evmapy.util.as_list(action['trigger'])
         action['trigger_active'] = [False for trigger in action['trigger']]
         action['sequence_cur'] = 1

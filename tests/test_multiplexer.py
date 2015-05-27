@@ -246,7 +246,7 @@ class TestMultiplexerLoop(TestMultiplexerBase):
         """
         action = {
             'id':       1,
-            'hold':     False,
+            'hold':     0.0,
             'type':     'key',
             'target':   'KEY_ENTER',
         }
@@ -260,7 +260,7 @@ class TestMultiplexerLoop(TestMultiplexerBase):
         """
         action = {
             'id':       1,
-            'hold':     False,
+            'hold':     0.0,
             'type':     'exec',
             'target':   'foo',
         }
@@ -274,7 +274,7 @@ class TestMultiplexerLoop(TestMultiplexerBase):
         """
         action = {
             'id':       1,
-            'hold':     True,
+            'hold':     1.0,
             'type':     'key',
             'target':   'KEY_ENTER',
         }
@@ -288,7 +288,7 @@ class TestMultiplexerLoop(TestMultiplexerBase):
         """
         action = {
             'id':       1,
-            'hold':     True,
+            'hold':     1.0,
             'type':     'exec',
             'target':   'foo',
         }
@@ -302,7 +302,7 @@ class TestMultiplexerLoop(TestMultiplexerBase):
         """
         action = {
             'id':       1,
-            'hold':     True,
+            'hold':     1.0,
             'type':     'key',
             'target':   'KEY_ENTER',
         }
@@ -316,7 +316,7 @@ class TestMultiplexerLoop(TestMultiplexerBase):
         """
         action = {
             'id':       1,
-            'hold':     True,
+            'hold':     1.0,
             'type':     'exec',
             'target':   'foo',
         }
@@ -332,7 +332,7 @@ class TestMultiplexerLoop(TestMultiplexerBase):
         tests.util.set_attrs_from_dict(self, mock_multiplexer('uinput'))
         action = {
             'id':       1,
-            'hold':     False,
+            'hold':     0.0,
             'type':     'key',
             'target':   'KEY_ENTER',
         }

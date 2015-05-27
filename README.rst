@@ -110,7 +110,7 @@ Configuration is stored in JSON files. You can generate one automatically using 
 
   - *trigger*: value(s) of the *name* property(-ies) of the event(s) which trigger(s) this action (*:min* or *:max* suffix is required for axes),
   - *sequence*: if set to *true*, *trigger* will be treated as a sequence of events; otherwise, *trigger* will be treated as a combination of events,
-  - *hold*: if set to *true* (which is only allowed when *sequence* is *false*), this action will only be triggered once all events listed in *trigger* will have been active for 1 second; otherwise, it will be triggered immediately,
+  - *hold*: if set to a positive value (which is only allowed when *sequence* is *false*), this action will only be triggered once all events listed in *trigger* will have been active for the given number of seconds; otherwise, it will be triggered immediately; this value is a floating point number, i.e. fractions of seconds can be used,
   - *type*:
 
     - *key*: event(s) will be translated to a key press,
@@ -147,7 +147,7 @@ If all this sounds too complicated, here are some examples to clear things up:
         {
             "trigger": "Button 1",
             "sequence": false,
-            "hold": false,
+            "hold": 0.0,
             "type": "key",
             "target": [ "KEY_LEFTALT", "KEY_ENTER" ]
         },
@@ -169,7 +169,7 @@ If all this sounds too complicated, here are some examples to clear things up:
         {
             "trigger": "Right analog stick (horizontal):min",
             "sequence": false,
-            "hold": true,
+            "hold": 1.0,
             "type": "exec",
             "target": "shutdown -h now"
         },
@@ -193,7 +193,7 @@ If all this sounds too complicated, here are some examples to clear things up:
         {
             "trigger": [ "SHIFT", "Q" ],
             "sequence": false,
-            "hold": false,
+            "hold": 0.0,
             "type": "key",
             "target": "KEY_ESC"
         },
@@ -219,7 +219,7 @@ If all this sounds too complicated, here are some examples to clear things up:
         {
             "trigger": [ "L-R:min", "U-D:min", "L-R:max", "U-D:max" ],
             "sequence": true,
-            "hold": false,
+            "hold": 0.0,
             "type": "key",
             "target": [ "KEY_LEFTALT", "KEY_LEFTCTRL", "KEY_DELETE" ]
         },
