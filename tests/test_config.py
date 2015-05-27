@@ -142,6 +142,24 @@ class TestConfig(unittest.TestCase):
         """
         self.check_load_error(Exception())
 
+    @unittest.mock.patch('evmapy.config.read')
+    def test_config_parse_hold(self, fake_read):
+        """
+        Check parse() behavior when contradicting properties are set for
+        an action
+        """
+        bad_config = tests.util.get_fake_config()
+        bad_config['actions'].append({
+            'trigger':  ['Foo:min', 'Foo:max'],
+            'sequence': True,
+            'hold':     True,
+            'type':     'key',
+            'target':   'KEY_BACKSPACE',
+        })
+        fake_read.return_value = bad_config
+        with self.assertRaises(evmapy.config.ConfigError):
+            evmapy.config.load(unittest.mock.Mock(), 'Foo.Bar.json')
+
     @unittest.mock.patch('logging.getLogger')
     @unittest.mock.patch('evmapy.config.read')
     def test_config_load_relative(self, fake_read, _):
@@ -167,5 +185,6 @@ class TestConfig(unittest.TestCase):
             config = evmapy.config.load(fake_device, None)
         self.assertSetEqual(set(config.keys()), set(['events', 'grab', 'map']))
         self.assertEqual(len(config['map'][100]), 2)
+        self.assertEqual(len(config['map'][101]), 1)
         self.assertEqual(len(config['map'][200]), 1)
         self.assertEqual(len(config['map'][300]), 0)

@@ -30,27 +30,45 @@ FAKE_CONFIG = {
     'actions': [
         {
             'trigger':  'Foo:min',
+            'sequence': False,
             'hold':     False,
             'type':     'key',
             'target':   'KEY_LEFT',
         },
         {
             'trigger':  'Foo:max',
+            'sequence': False,
             'hold':     False,
             'type':     'key',
             'target':   'KEY_RIGHT',
         },
         {
             'trigger':  'Bar',
+            'sequence': False,
             'hold':     False,
             'type':     'key',
             'target':   'KEY_ENTER',
         },
         {
             'trigger':  ['Foobar', 'Foobaz'],
+            'sequence': False,
             'hold':     False,
             'type':     'key',
             'target':   'KEY_ESC',
+        },
+        {
+            'trigger':  ['Foofoo:max', 'Foofoo:max'],
+            'sequence': True,
+            'hold':     False,
+            'type':     'key',
+            'target':   ['KEY_UP', 'KEY_DOWN'],
+        },
+        {
+            'trigger':  ['Barbar:min', 'Bazbaz:max'],
+            'sequence': True,
+            'hold':     False,
+            'type':     'key',
+            'target':   'KEY_SPACE',
         },
     ],
     'axes': [
@@ -60,6 +78,24 @@ FAKE_CONFIG = {
             'min':      0,
             'max':      255,
         },
+        {
+            'name':     'Foofoo',
+            'code':     101,
+            'min':      0,
+            'max':      255,
+        },
+        {
+            'name':     'Barbar',
+            'code':     102,
+            'min':      0,
+            'max':      255,
+        },
+        {
+            'name':     'Bazbaz',
+            'code':     103,
+            'min':      0,
+            'max':      255,
+        }
     ],
     'buttons': [
         {

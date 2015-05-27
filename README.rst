@@ -42,6 +42,7 @@ Features
   - single event, hold
   - combined events, immediate
   - combined events, hold
+  - sequence of events, immediate
 
 Installation
 ------------
@@ -108,7 +109,8 @@ Configuration is stored in JSON files. You can generate one automatically using 
 - *actions*: actions to take in response to events; each action must have all of the following properties defined:
 
   - *trigger*: value(s) of the *name* property(-ies) of the event(s) which trigger(s) this action (*:min* or *:max* suffix is required for axes),
-  - *hold*: if set to *true*, this action will only be triggered once all events listed in *trigger* will have been active for 1 second; otherwise, it will be triggered immediately,
+  - *sequence*: if set to *true*, *trigger* will be treated as a sequence of events; otherwise, *trigger* will be treated as a combination of events,
+  - *hold*: if set to *true* (which is only allowed when *sequence* is *false*), this action will only be triggered once all events listed in *trigger* will have been active for 1 second; otherwise, it will be triggered immediately,
   - *type*:
 
     - *key*: event(s) will be translated to a key press,
@@ -144,6 +146,7 @@ If all this sounds too complicated, here are some examples to clear things up:
     "actions": [
         {
             "trigger": "Button 1",
+            "sequence": false,
             "hold": false,
             "type": "key",
             "target": [ "KEY_LEFTALT", "KEY_ENTER" ]
@@ -165,6 +168,7 @@ If all this sounds too complicated, here are some examples to clear things up:
     "actions": [
         {
             "trigger": "Right analog stick (horizontal):min",
+            "sequence": false,
             "hold": true,
             "type": "exec",
             "target": "shutdown -h now"
@@ -188,6 +192,7 @@ If all this sounds too complicated, here are some examples to clear things up:
     "actions": [
         {
             "trigger": [ "SHIFT", "Q" ],
+            "sequence": false,
             "hold": false,
             "type": "key",
             "target": "KEY_ESC"
@@ -202,6 +207,36 @@ If all this sounds too complicated, here are some examples to clear things up:
         {
             "name": "Q",
             "code": 16
+        },
+    ...
+    ]
+
+- Send *ALT+CTRL+DEL* when you make a circular, clockwise motion with an analog stick
+
+  ::
+
+    "actions": [
+        {
+            "trigger": [ "L-R:min", "U-D:min", "L-R:max", "U-D:max" ],
+            "sequence": true,
+            "hold": false,
+            "type": "key",
+            "target": [ "KEY_LEFTALT", "KEY_LEFTCTRL", "KEY_DELETE" ]
+        },
+    ...
+    ],
+    "axes": [
+        {
+            "name": "L-R",
+            "code": 0,
+            "min": 0,
+            "max": 255
+        },
+        {
+            "name": "U-D",
+            "code": 1,
+            "min": 0,
+            "max": 255
         },
     ...
     ]

@@ -43,11 +43,13 @@ class ConfigError(Exception):
     :type reason: Exception
     """
 
-    def __init__(self, path, reason):
+    def __init__(self, reason, path=None):
         super().__init__()
         self.path = path
         self.not_found = False
-        if isinstance(reason, ValueError):
+        if isinstance(reason, ConfigError):
+            self.error = reason.error
+        elif isinstance(reason, ValueError):
             self.error = "Invalid JSON file: %s" % str(reason)
         elif isinstance(reason, FileNotFoundError):
             self.error = "File not found"
@@ -118,6 +120,7 @@ def generate(device):
         for (event_names, activator) in events:
             event_name = evmapy.util.first_element(event_names)
             action_base = {
+                'sequence': False,
                 'hold':     False,
                 'type':     'exec',
                 'target':   'echo %s' % event_name,
@@ -188,7 +191,7 @@ def load(device, name):
         config_input = read(path)
         config = parse(config_input)
     except Exception as exc:
-        raise ConfigError(path, exc)
+        raise ConfigError(exc, path)
     logging.getLogger().info("%s: loaded %s", device.fn, path)
     return config
 
@@ -217,6 +220,8 @@ def parse(config_input):
     :type config_input: dict
     :returns: processed configuration dictionary
     :rtype: dict
+    :raises evmapy.config.ConfigError: when an error is found while
+        processing the configuration
     """
     config = {
         'events':   {},
@@ -240,12 +245,17 @@ def parse(config_input):
         config['events'][event['code']] = event
         config['map'][event['code']] = []
     for action in config_input['actions']:
+        if action['sequence'] and action['hold']:
+            raise ConfigError("'hold' cannot be set for sequences")
         action['trigger'] = evmapy.util.as_list(action['trigger'])
         action['trigger_active'] = [False for trigger in action['trigger']]
+        action['sequence_cur'] = 1
+        action['sequence_done'] = False
         for trigger in action['trigger']:
             event_name = trigger.split(':')[0]
             event = next(e for e in events if e['name'] == event_name)
-            config['map'][event['code']].append(action)
+            if action not in config['map'][event['code']]:
+                config['map'][event['code']].append(action)
         action['id'] = current_id
         current_id += 1
     return config

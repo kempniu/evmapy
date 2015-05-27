@@ -98,6 +98,23 @@ class TestSource(unittest.TestCase):
             (evdev.ecodes.ecodes['EV_ABS'], 100, 192),
             (evdev.ecodes.ecodes['EV_ABS'], 100, 128),
             (evdev.ecodes.ecodes['EV_ABS'], 100, 64),
+            (evdev.ecodes.ecodes['EV_ABS'], 101, 128),
+            (evdev.ecodes.ecodes['EV_ABS'], 101, 256),
+            (evdev.ecodes.ecodes['EV_ABS'], 101, 128),
+            (evdev.ecodes.ecodes['EV_ABS'], 101, 256),
+            (evdev.ecodes.ecodes['EV_ABS'], 101, 128),
+            (evdev.ecodes.ecodes['EV_ABS'], 101, 256),
+            (evdev.ecodes.ecodes['EV_ABS'], 101, 128),
+            (evdev.ecodes.ecodes['EV_ABS'], 101, 0),
+            (evdev.ecodes.ecodes['EV_ABS'], 101, 128),
+            (evdev.ecodes.ecodes['EV_ABS'], 101, 256),
+            (evdev.ecodes.ecodes['EV_ABS'], 101, 128),
+            (evdev.ecodes.ecodes['EV_ABS'], 102, 0),
+            (evdev.ecodes.ecodes['EV_ABS'], 102, 128),
+            (evdev.ecodes.ecodes['EV_ABS'], 103, 256),
+            (evdev.ecodes.ecodes['EV_ABS'], 102, 0),
+            (evdev.ecodes.ecodes['EV_ABS'], 102, 128),
+            (evdev.ecodes.ecodes['EV_ABS'], 103, 128),
         ]
         expected_list = [
             ('KEY_ENTER', 'down'),
@@ -108,6 +125,10 @@ class TestSource(unittest.TestCase):
             ('KEY_LEFT', 'up'),
             ('KEY_RIGHT', 'down'),
             ('KEY_RIGHT', 'up'),
+            (['KEY_UP', 'KEY_DOWN'], 'down'),
+            (['KEY_UP', 'KEY_DOWN'], 'up'),
+            ('KEY_SPACE', 'down'),
+            ('KEY_SPACE', 'up'),
         ]
         fake_events = []
         for (ecode, etype, evalue) in event_list:

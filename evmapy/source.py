@@ -57,6 +57,7 @@ class Source(object):
         self._device = device
         self._config = {}
         self._grabbed = False
+        self._event_history = [None, None]
         self._logger = logging.getLogger()
         self.load_config()
 
@@ -100,21 +101,13 @@ class Source(object):
             (event_name, event_active) = self._normalize_event(event)
             if not event_name:
                 continue
+            if event_active:
+                self._event_history[0] = self._event_history[1]
+                self._event_history[1] = event_name
             for action in self._config['map'][event.code]:
-                try:
-                    event_index = action['trigger'].index(event_name)
-                except ValueError:
-                    # event is ':min' but we're looking for ':max' or
-                    # vice versa
-                    continue
-                if event_active:
-                    action['trigger_active'][event_index] = True
-                    if all(action['trigger_active']):
-                        pending.append((action, 'down'))
-                else:
-                    if all(action['trigger_active']):
-                        pending.append((action, 'up'))
-                    action['trigger_active'][event_index] = False
+                pending.extend(
+                    self._process_action(action, event_name, event_active)
+                )
         return pending
 
     def _pending_events(self):
@@ -175,4 +168,53 @@ class Source(object):
             else:
                 retval = (name, False)
         event_info['previous'] = current
+        return retval
+
+    def _process_action(self, action, event_name, event_active):
+        """
+        Process the given event in the context of the given action.
+
+        :param action: action in the context of which the given event
+            should be processed
+        :type action: dict
+        :param event_name: normalized name of the event to be processed
+        :type event_name: str
+        :param event_active: whether the event is active or not
+        :type event_active: bool
+        :returns: list of actions to be performed
+        :rtype: list
+        """
+        retval = []
+        try:
+            event_index = action['trigger'].index(event_name)
+        except ValueError:
+            # event is ':min' but we're looking for ':max' or vice versa
+            return retval
+        if not action['sequence']:
+            if event_active:
+                action['trigger_active'][event_index] = True
+                if all(action['trigger_active']):
+                    retval.append((action, 'down'))
+            else:
+                if all(action['trigger_active']):
+                    retval.append((action, 'up'))
+                action['trigger_active'][event_index] = False
+        else:
+            sequence = action['trigger']
+            current = action['sequence_cur']
+            if event_active:
+                if (event_name == sequence[current] and
+                        self._event_history[0] == sequence[current-1]):
+                    action['sequence_cur'] += 1
+                    if action['sequence_cur'] == len(sequence):
+                        retval.append((action, 'down'))
+                        action['sequence_cur'] = 1
+                        action['sequence_done'] = True
+                        self._event_history[1] = None
+                else:
+                    action['sequence_cur'] = 1
+            else:
+                if action['sequence_done'] and event_name == sequence[-1]:
+                    retval.append((action, 'up'))
+                    action['sequence_done'] = False
         return retval
