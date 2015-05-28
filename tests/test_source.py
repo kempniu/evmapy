@@ -115,6 +115,10 @@ class TestSource(unittest.TestCase):
             (evdev.ecodes.ecodes['EV_ABS'], 102, 0),
             (evdev.ecodes.ecodes['EV_ABS'], 102, 128),
             (evdev.ecodes.ecodes['EV_ABS'], 103, 128),
+            (evdev.ecodes.ecodes['EV_ABS'], 102, 256),
+            (evdev.ecodes.ecodes['EV_ABS'], 102, 128),
+            (evdev.ecodes.ecodes['EV_ABS'], 103, 0),
+            (evdev.ecodes.ecodes['EV_ABS'], 103, 128),
         ]
         expected_list = [
             ('KEY_ENTER', 'down'),
@@ -129,6 +133,10 @@ class TestSource(unittest.TestCase):
             (['KEY_UP', 'KEY_DOWN'], 'up'),
             ('KEY_SPACE', 'down'),
             ('KEY_SPACE', 'up'),
+            ('KEY_BACKSPACE', 'down'),
+            ('KEY_BACKSPACE', 'up'),
+            ('KEY_BACKSPACE', 'down'),
+            ('KEY_BACKSPACE', 'up'),
         ]
         fake_events = []
         for (ecode, etype, evalue) in event_list:

@@ -119,8 +119,13 @@ Configuration is stored in JSON files. You can generate one automatically using 
     - if *type* is *key*: the key(s) to "press" (see ``/usr/include/linux/input.h`` for a list of valid values),
     - if *type* is *exec*: the command(s) to run,
 
-  - *(optional) sequence*: if set to *true*, *trigger* will be treated as a sequence of events; otherwise, *trigger* will be treated as a combination of events; defaults to *false*,
-  - *(optional) hold*: if set to a positive value (which is only allowed when *sequence* is *false*), this action will only be triggered once all events listed in *trigger* will have been active for the given number of seconds; otherwise, it will be triggered immediately; this value is a floating point number, i.e. fractions of seconds can be used; defaults to *0* (i.e. immediate triggering),
+  - *(optional) mode*:
+
+    - *all (default)*: *trigger* will be treated as a combination of events,
+    - *sequence*: *trigger* will be treated as a sequence of events,
+    - *any*: *trigger* will be treated as a list of alternative events, any of which causes the action to be performed,
+
+  - *(optional) hold*: if set to a positive value (which is only allowed when *mode* is **not** *sequence*), this action will only be triggered once sufficient triggers will have been active for the given number of seconds; otherwise, it will be triggered immediately once sufficient triggers are active; this value is a floating point number, i.e. fractions of seconds can be used; defaults to *0* (i.e. immediate triggering),
 
 - *axes*: list of input device axes, each of which must have all of the following properties assigned:
 
@@ -214,7 +219,7 @@ If all this sounds too complicated, here are some examples to clear things up:
     "actions": [
         {
             "trigger": [ "L-R:min", "U-D:min", "L-R:max", "U-D:max" ],
-            "sequence": true,
+            "mode": "sequence",
             "type": "key",
             "target": [ "KEY_LEFTALT", "KEY_LEFTCTRL", "KEY_DELETE" ]
         },
@@ -232,6 +237,31 @@ If all this sounds too complicated, here are some examples to clear things up:
             "code": 1,
             "min": 0,
             "max": 255
+        },
+    ...
+    ]
+
+- Print ``yo`` to all user terminals when either *Y* or *O* is pressed
+
+  ::
+
+    "actions": [
+        {
+            "trigger": [ "Y", "O" ],
+            "mode": "any",
+            "type": "exec",
+            "target": "echo yo | wall"
+        },
+    ...
+    ],
+    "buttons": [
+        {
+            "name": "Y",
+            "code": 21
+        },
+        {
+            "name": "O",
+            "code": 24
         },
     ...
     ]

@@ -190,13 +190,13 @@ class Source(object):
         except ValueError:
             # event is ':min' but we're looking for ':max' or vice versa
             return retval
-        if not action['sequence']:
+        if not action['mode'] == 'sequence':
             if event_active:
                 action['trigger_active'][event_index] = True
-                if all(action['trigger_active']):
+                if action['mode'] == 'any' or all(action['trigger_active']):
                     retval.append((action, 'down'))
             else:
-                if all(action['trigger_active']):
+                if action['mode'] == 'any' or all(action['trigger_active']):
                     retval.append((action, 'up'))
                 action['trigger_active'][event_index] = False
         else:

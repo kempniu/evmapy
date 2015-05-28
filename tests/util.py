@@ -50,15 +50,21 @@ FAKE_CONFIG = {
         },
         {
             'trigger':  ['Foofoo:max', 'Foofoo:max'],
-            'sequence': True,
+            'mode':     'sequence',
             'type':     'key',
             'target':   ['KEY_UP', 'KEY_DOWN'],
         },
         {
             'trigger':  ['Barbar:min', 'Bazbaz:max'],
-            'sequence': True,
+            'mode':     'sequence',
             'type':     'key',
             'target':   'KEY_SPACE',
+        },
+        {
+            'trigger':  ['Barbar:max', 'Bazbaz:min'],
+            'mode':     'any',
+            'type':     'key',
+            'target':   'KEY_BACKSPACE',
         },
     ],
     'axes': [

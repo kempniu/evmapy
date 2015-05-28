@@ -172,7 +172,7 @@ class TestConfig(unittest.TestCase):
         """
         self.check_parse_error({
             'trigger':  ['Foo:min', 'Foo:max'],
-            'sequence': True,
+            'mode':     'sequence',
             'hold':     1.0,
             'type':     'key',
             'target':   'KEY_BACKSPACE',

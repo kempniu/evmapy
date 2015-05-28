@@ -230,7 +230,7 @@ def parse(config_input):
     }
     defaults = {
         'hold':     0.0,
-        'sequence': False,
+        'mode':     'all',
     }
     # Every action needs a unique identifier in order for the event
     # multiplexer to be able to remove it from the list of delayed
@@ -254,7 +254,7 @@ def parse(config_input):
                 action[parameter] = default
         if action['hold'] < 0:
             raise ConfigError("hold time cannot be negative")
-        if action['sequence'] and action['hold'] > 0:
+        if action['mode'] == 'sequence' and action['hold'] > 0:
             raise ConfigError("hold time cannot be positive for sequences")
         action['trigger'] = evmapy.util.as_list(action['trigger'])
         action['trigger_active'] = [False for trigger in action['trigger']]
