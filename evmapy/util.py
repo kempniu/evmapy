@@ -21,6 +21,7 @@
 Various helper functions used by other modules
 """
 
+import collections
 import os
 import pwd
 
@@ -65,3 +66,19 @@ def get_app_info():
     }
     info['config_dir'] = os.path.join(info['user'].pw_dir, '.' + info['name'])
     return info
+
+
+def ordered_dict(data):
+    """
+    Generate a :py:class:`collections.OrderedDict` out of a list of
+    tuples.
+
+    :param data: list of *(key, value)* tuples
+    :type data: list
+    :returns: ordered dictionary generated out of passed data
+    :rtype: collections.OrderedDict
+    """
+    retval = collections.OrderedDict()
+    for (key, value) in data:
+        retval[key] = value
+    return retval

@@ -109,35 +109,37 @@ def generate(device):
     :returns: default configuration dictionary
     :rtype: dict
     """
-    config = {
-        'grab':     False,
-        'actions':  [],
-        'axes':     [],
-        'buttons':  [],
-    }
+
+    config = evmapy.util.ordered_dict([
+        ('actions', []),
+        ('axes', []),
+        ('buttons', []),
+        ('grab', False),
+    ])
     capabilities = device.capabilities(verbose=True, absinfo=True)
     for ((_, event_type_id), events) in capabilities.items():
         for (event_names, activator) in events:
             event_name = evmapy.util.first_element(event_names)
-            action_base = {
-                'type':     'exec',
-                'target':   'echo %s' % event_name,
-            }
+            action_base = evmapy.util.ordered_dict([
+                ('trigger', None),
+                ('type', 'exec'),
+                ('target', 'echo %s' % event_name),
+            ])
             if event_type_id == evdev.ecodes.ecodes['EV_KEY']:
-                config['buttons'].append({
-                    'name': event_name,
-                    'code': activator,
-                })
+                config['buttons'].append(evmapy.util.ordered_dict([
+                    ('name', event_name),
+                    ('code', activator),
+                ]))
                 action = action_base.copy()
                 action['trigger'] = event_name
                 config['actions'].append(action)
             elif event_type_id == evdev.ecodes.ecodes['EV_ABS']:
-                config['axes'].append({
-                    'name': event_name,
-                    'code': event_names[1],
-                    'min':  activator.min,
-                    'max':  activator.max,
-                })
+                config['axes'].append(evmapy.util.ordered_dict([
+                    ('name', event_name),
+                    ('code', event_names[1]),
+                    ('min', activator.min),
+                    ('max', activator.max),
+                ]))
                 for limit in ('min', 'max'):
                     action = action_base.copy()
                     action['trigger'] = '%s:%s' % (event_name, limit)
@@ -163,7 +165,7 @@ def save(path, config):
     except FileExistsError:
         pass
     with open(path, 'w') as config_file:
-        json.dump(config, config_file, indent=4, sort_keys=True)
+        json.dump(config, config_file, indent=4)
 
 
 def load(device, name):
