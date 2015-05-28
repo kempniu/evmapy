@@ -33,10 +33,31 @@ import evmapy.util
 import tests.util
 
 
-class TestConfig(unittest.TestCase):
+class TestConfigBase(unittest.TestCase):
+    """
+    Base class for other test classes, to avoid boilerplate
+    """
+    @unittest.mock.patch('evmapy.config.read')
+    def check_bad_config(self, *args):
+        """
+        Check parse() behavior when configuration contains errors
+        """
+        (extra_config, fake_read) = args
+        bad_config = tests.util.get_fake_config()
+        for (key, config) in extra_config.items():
+            try:
+                bad_config[key].extend(config)
+            except KeyError:
+                bad_config[key] = config
+        fake_read.return_value = bad_config
+        with self.assertRaises(evmapy.config.ConfigError):
+            evmapy.config.load(unittest.mock.Mock(), 'Foo.Bar.json')
+
+
+class TestConfig(TestConfigBase):
 
     """
-    Test all functions
+    Test all functions except validate_action()
     """
 
     def test_config_create_invalid_path(self):
@@ -142,42 +163,6 @@ class TestConfig(unittest.TestCase):
         """
         self.check_load_error(Exception())
 
-    @unittest.mock.patch('evmapy.config.read')
-    def check_parse_error(self, *args):
-        """
-        Check parse() behavior when configuration contains errors
-        """
-        (extra_action, fake_read) = args
-        bad_config = tests.util.get_fake_config()
-        bad_config['actions'].append(extra_action)
-        fake_read.return_value = bad_config
-        with self.assertRaises(evmapy.config.ConfigError):
-            evmapy.config.load(unittest.mock.Mock(), 'Foo.Bar.json')
-
-    def test_config_parse_hold(self):
-        """
-        Check parse() behavior when action's hold time is negative
-        """
-        self.check_parse_error({
-            'trigger':  'Foo',
-            'hold':     1.0 * -1,
-            'type':     'key',
-            'target':   'KEY_BACKSPACE',
-        })
-
-    def test_config_parse_hold_seq(self):
-        """
-        Check parse() behavior when contradicting properties are set for
-        an action
-        """
-        self.check_parse_error({
-            'trigger':  ['Foo:min', 'Foo:max'],
-            'mode':     'sequence',
-            'hold':     1.0,
-            'type':     'key',
-            'target':   'KEY_BACKSPACE',
-        })
-
     @unittest.mock.patch('logging.getLogger')
     @unittest.mock.patch('evmapy.config.read')
     def test_config_load_relative(self, fake_read, _):
@@ -206,3 +191,201 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(len(config['map'][101]), 1)
         self.assertEqual(len(config['map'][200]), 1)
         self.assertEqual(len(config['map'][300]), 0)
+
+    def test_config_param_req(self):
+        """
+        Check validate_parameters() behavior when a required parameter
+        is missing
+        """
+        self.check_bad_config({
+            'actions': [
+                {
+                    'trigger': 'foo',
+                },
+            ],
+        })
+
+    def test_config_param_opt(self):
+        """
+        Check validate_parameters() behavior when an unknown parameter
+        is set
+        """
+        self.check_bad_config({
+            'foo': 'bar'
+        })
+
+    def test_config_param_type(self):
+        """
+        Check validate_parameters() behavior when a parameter is of an
+        invalid type
+        """
+        self.check_bad_config({
+            'buttons': [
+                {
+                    'name': 'foo',
+                    'code': 'bar',
+                }
+            ]
+        })
+
+    def test_config_parse_dup_name(self):
+        """
+        Check parse() behavior when two events have the same name
+        assigned
+        """
+        self.check_bad_config({
+            'buttons': [
+                {
+                    'name': 'Foo',
+                    'code': 400,
+                },
+            ],
+        })
+
+    def test_config_parse_dup_code(self):
+        """
+        Check parse() behavior when two events have the same code
+        assigned
+        """
+        self.check_bad_config({
+            'buttons': [
+                {
+                    'name': 'foo',
+                    'code': 100,
+                },
+            ],
+        })
+
+    def test_config_parse_trigger(self):
+        """
+        Check parse() behavior when an invalid event is set as action
+        trigger
+        """
+        self.check_bad_config({
+            'actions': [
+                {
+                    'trigger':  'foo',
+                    'type':     'key',
+                    'target':   'KEY_ENTER',
+                }
+            ],
+        })
+
+    def test_config_parse_suffix(self):
+        """
+        Check parse() behavior for a triggering event with an invalid
+        suffix
+        """
+        self.check_bad_config({
+            'actions': [
+                {
+                    'trigger':  'Bar:min',
+                    'type':     'key',
+                    'target':   'KEY_ENTER',
+                },
+            ],
+        })
+
+
+class TestConfigValidateAction(TestConfigBase):
+
+    """
+    Test validate_action()
+    """
+
+    def check_bad_action(self, bad_action):
+        """
+        Test validate_action()
+        """
+        self.check_bad_config({'actions': [bad_action]})
+
+    def test_config_action_bad_type(self):
+        """
+        Check validate_action() behavior when action's type is invalid
+        """
+        self.check_bad_action({
+            'trigger':  'Foo',
+            'type':     'foo',
+            'target':   'KEY_BACKSPACE',
+        })
+
+    def test_config_action_bad_mode(self):
+        """
+        Check validate_action() behavior when action's mode is invalid
+        """
+        self.check_bad_action({
+            'trigger':  ['Foo', 'Bar'],
+            'mode':     'foo',
+            'type':     'key',
+            'target':   'KEY_BACKSPACE',
+        })
+
+    def test_config_action_hold_neg(self):
+        """
+        Check validate_action() behavior when action's hold time is
+        negative
+        """
+        self.check_bad_action({
+            'trigger':  'Foo',
+            'hold':     1.0 * -1,
+            'type':     'key',
+            'target':   'KEY_BACKSPACE',
+        })
+
+    def test_config_action_bad_key(self):
+        """
+        Check validate_action() behavior when an unknown key is set as
+        the target
+        """
+        self.check_bad_action({
+            'trigger':  'Foo',
+            'type':     'key',
+            'target':   'Bar',
+        })
+
+    def test_config_action_dup_target(self):
+        """
+        Check validate_action() behavior when target contains duplicate
+        events
+        """
+        self.check_bad_action({
+            'trigger':  'Foo',
+            'type':     'key',
+            'target':   ['KEY_BACKSPACE', 'KEY_BACKSPACE'],
+        })
+
+    def test_config_action_hold_seq(self):
+        """
+        Check validate_action() behavior when contradicting properties
+        are set for an action
+        """
+        self.check_bad_action({
+            'trigger':  ['Foo:min', 'Foo:max'],
+            'mode':     'sequence',
+            'hold':     1.0,
+            'type':     'key',
+            'target':   'KEY_BACKSPACE',
+        })
+
+    def test_config_action_seq_single(self):
+        """
+        Check validate_action() behavior when trigger sequence only
+        contains one event
+        """
+        self.check_bad_action({
+            'trigger':  'Foo',
+            'mode':     'sequence',
+            'type':     'key',
+            'target':   'KEY_BACKSPACE',
+        })
+
+    def test_config_action_dup_trigger(self):
+        """
+        Check validate_action() behavior when a non-sequential trigger
+        list contains duplicate events
+        """
+        self.check_bad_action({
+            'trigger':  ['Foo', 'Foo'],
+            'type':     'key',
+            'target':   'KEY_BACKSPACE',
+        })

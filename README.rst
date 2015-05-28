@@ -119,7 +119,7 @@ Configuration is stored in JSON files. You can generate one automatically using 
     - if *type* is *key*: the key(s) to "press" (see ``/usr/include/linux/input.h`` for a list of valid values),
     - if *type* is *exec*: the command(s) to run,
 
-  - *(optional) mode*:
+  - *(optional) mode*: triggering mode for actions with *trigger* containing more than one event:
 
     - *all (default)*: *trigger* will be treated as a combination of events,
     - *sequence*: *trigger* will be treated as a sequence of events,

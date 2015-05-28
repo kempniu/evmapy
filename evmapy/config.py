@@ -223,6 +223,7 @@ def parse(config_input):
     :raises evmapy.config.ConfigError: when an error is found while
         processing the configuration
     """
+    validate_parameters(config_input)
     config = {
         'events':   {},
         'grab':     config_input['grab'],
@@ -238,11 +239,12 @@ def parse(config_input):
     # there may be identical actions configured for two different events
     current_id = 0
     events = config_input['axes'] + config_input['buttons']
+    validate_events(events)
     for event in events:
-        if 'min' in event and 'max' in event:
+        try:
             # Axis event
             idle = (event['min'] + event['max']) // 2
-        else:
+        except KeyError:
             # Button event
             idle = 0
         event['previous'] = idle
@@ -252,19 +254,157 @@ def parse(config_input):
         for (parameter, default) in defaults.items():
             if parameter not in action:
                 action[parameter] = default
-        if action['hold'] < 0:
-            raise ConfigError("hold time cannot be negative")
-        if action['mode'] == 'sequence' and action['hold'] > 0:
-            raise ConfigError("hold time cannot be positive for sequences")
         action['trigger'] = evmapy.util.as_list(action['trigger'])
         action['trigger_active'] = [False for trigger in action['trigger']]
         action['sequence_cur'] = 1
         action['sequence_done'] = False
+        validate_action(action)
         for trigger in action['trigger']:
-            event_name = trigger.split(':')[0]
-            event = next(e for e in events if e['name'] == event_name)
+            try:
+                # Axis event
+                (event_name, suffix) = trigger.split(':', 1)
+            except ValueError:
+                # Button event
+                event_name = trigger
+                suffix = None
+            try:
+                event = next(e for e in events if e['name'] == event_name)
+            except StopIteration:
+                raise ConfigError("unknown event '%s'" % event_name)
+            if suffix and suffix not in event:
+                raise ConfigError("invalid event suffix '%s'" % suffix)
             if action not in config['map'][event['code']]:
                 config['map'][event['code']].append(action)
         action['id'] = current_id
         current_id += 1
     return config
+
+
+def validate_parameters(config):
+    """
+    Perform some checks on the keys and types of values found in the
+    configuration dictionary.
+
+    :param config: configuration dictionary read from configuration file
+    :type config: dict
+    :returns: None
+    :raises evmapy.config.ConfigError: when an error is detected
+    """
+    level_names = evmapy.util.ordered_dict([
+        ('top', 'top-level'),
+        ('actions', 'action'),
+        ('axes', 'axis'),
+        ('buttons', 'button'),
+    ])
+    required = {
+        'top': [
+            ('actions', list),
+            ('axes', list),
+            ('buttons', list),
+            ('grab', bool),
+        ],
+        'actions': [
+            ('target', [str, list]),
+            ('trigger', [str, list]),
+            ('type', str),
+        ],
+        'axes': [
+            ('code', int),
+            ('min', int),
+            ('max', int),
+            ('name', str),
+        ],
+        'buttons': [
+            ('code', int),
+            ('name', str),
+        ],
+    }
+    optional = {
+        'top':      [],
+        'actions':  [
+            ('hold', [float, int]),
+            ('mode', str),
+        ],
+        'axes':     [],
+        'buttons':  [],
+    }
+    config_copy = config.copy()
+    config_copy['top'] = [config]
+    for (key, level) in level_names.items():
+        valid = dict(required[key] + optional[key])
+        for obj in config_copy[key]:
+            for (param, _) in required[key]:
+                if param not in obj:
+                    raise ConfigError(
+                        "required %s parameter '%s' not set" % (level, param)
+                    )
+            for param in obj:
+                if param not in valid:
+                    raise ConfigError(
+                        "unknown %s parameter '%s'" % (level, param)
+                    )
+                valid_types = evmapy.util.as_list(valid[param])
+                valid_type_names = [t.__name__ for t in valid_types]
+                if type(obj[param]).__name__ not in valid_type_names:
+                    raise ConfigError(
+                        "'%s' has to be of type %s" % (
+                            param, " or ".join(valid_type_names)
+                        )
+                    )
+
+
+def validate_events(events):
+    """
+    Check a list of events for duplicates.
+
+    :param events: list of events to check
+    :type events: list
+    :returns: None
+    :raises evmapy.config.ConfigError: when a duplicate event is found
+    """
+    unique = {
+        'name': [],
+        'code': [],
+    }
+    for event in events:
+        for key in unique:
+            if event[key] in unique[key]:
+                raise ConfigError(
+                    "duplicate event %s '%s'" % (key, event[key])
+                )
+            else:
+                unique[key].append(event[key])
+
+
+def validate_action(action):
+    """
+    Perform some error checks on an action.
+
+    :param action: action to check
+    :type action: dict
+    :returns: None
+    :raises evmapy.config.ConfigError: when an error is detected
+    """
+    hold = action['hold']
+    trigger = action['trigger']
+    target = evmapy.util.as_list(action['target'])
+    if action['type'] not in ('exec', 'key'):
+        raise ConfigError("invalid action type '%s'" % action['type'])
+    if action['mode'] not in ('all', 'any', 'sequence'):
+        raise ConfigError("invalid action mode '%s'" % action['mode'])
+    if hold < 0:
+        raise ConfigError("hold time cannot be negative")
+    if action['type'] == 'key':
+        for key in target:
+            if key not in evdev.ecodes.ecodes:
+                raise ConfigError("unknown key '%s'" % key)
+        if len(set(target)) != len(target):
+            raise ConfigError("duplicate event(s) in action target")
+    if action['mode'] == 'sequence':
+        if hold > 0:
+            raise ConfigError("hold time cannot be positive for sequences")
+        if len(trigger) < 2:
+            raise ConfigError("sequence must contain more than 1 event")
+    else:
+        if len(set(trigger)) != len(trigger):
+            raise ConfigError("duplicate event(s) in action trigger")
