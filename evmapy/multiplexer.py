@@ -35,20 +35,6 @@ import evmapy.source
 import evmapy.util
 
 
-def _execute_program(action):
-    """
-    Run external program(s) associated with the given action.
-
-    :param action: action dictionary containing a `target` key which
-        specifies the command(s) to be run
-    :type action: dict
-    :returns: None
-    """
-    commands = evmapy.util.as_list(action['target'])
-    for command in commands:
-        os.system(command)
-
-
 class SIGHUPReceivedException(Exception):
     """
     Exception raised when a SIGHUP signal is received.
@@ -261,6 +247,7 @@ class Multiplexer(object):
                 # It's time for the next delayed action
                 self._perform_delayed_actions()
             if self._uinput:
+                self._logger.debug("writing: code 00, type 00, val 00")
                 self._uinput.syn()
 
     def _perform_normal_actions(self, actions):
@@ -280,7 +267,7 @@ class Multiplexer(object):
                     if action['type'] == 'key':
                         self._uinput_synthesize(action, press=True)
                     elif action['type'] == 'exec':
-                        _execute_program(action)
+                        self._execute_program(action)
                 else:
                     if action['type'] == 'key':
                         self._uinput_synthesize(action, press=False)
@@ -321,7 +308,7 @@ class Multiplexer(object):
             else:
                 self._uinput_synthesize(action, press=False)
         elif action['type'] == 'exec':
-            _execute_program(action)
+            self._execute_program(action)
         del self._delayed[0]
 
     def _uinput_synthesize(self, action, press):
@@ -340,9 +327,26 @@ class Multiplexer(object):
             return
         keys = evmapy.util.as_list(action['target'])
         for key in keys:
-            ecode = evdev.ecodes.ecodes['EV_KEY']
-            etype = evdev.ecodes.ecodes[key]
-            self._uinput.write(ecode, etype, int(press))
+            etype = evdev.ecodes.ecodes['EV_KEY']
+            ecode = evdev.ecodes.ecodes[key]
+            self._logger.debug(
+                "writing: code %02d, type %02d, val %02d", ecode, etype, press
+            )
+            self._uinput.write(etype, ecode, int(press))
+
+    def _execute_program(self, action):
+        """
+        Run external program(s) associated with the given action.
+
+        :param action: action dictionary containing a `target` key which
+            specifies the command(s) to be run
+        :type action: dict
+        :returns: None
+        """
+        commands = evmapy.util.as_list(action['target'])
+        for command in commands:
+            self._logger.debug("running: '%s'", command)
+            os.system(command)
 
     def load_device_config(self, dev_path, config_file):
         """

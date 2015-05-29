@@ -49,6 +49,9 @@ def initialize_logging(appname, debug):
     logger.setLevel(logging.DEBUG if debug else logging.INFO)
     if os.isatty(sys.stdout.fileno()):
         stdout = logging.StreamHandler(stream=sys.stdout)
+        if debug:
+            formatter = logging.Formatter('%(created)f: %(message)s')
+            stdout.setFormatter(formatter)
         logger.addHandler(stdout)
     else:
         syslog = logging.handlers.SysLogHandler(
