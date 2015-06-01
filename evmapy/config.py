@@ -21,6 +21,7 @@
 Functions handling configuration generation, saving and loading
 """
 
+import copy
 import json
 import logging
 import os
@@ -112,9 +113,9 @@ def generate(device):
 
     config = evmapy.util.ordered_dict([
         ('actions', []),
+        ('grab', False),
         ('axes', []),
         ('buttons', []),
-        ('grab', False),
     ])
     capabilities = device.capabilities(verbose=True, absinfo=True)
     for ((_, event_type_id), events) in capabilities.items():
@@ -168,7 +169,7 @@ def save(path, config):
         json.dump(config, config_file, indent=4)
 
 
-def load(device, name):
+def load(device, name, old_config=None):
     """
     Load configuration for the given device.
 
@@ -177,8 +178,15 @@ def load(device, name):
     :param name: name of the configuration file to load (`None` and `''`
         cause the default configuration file to be used)
     :type name: str
-    :returns: processed configuration from the loaded configuration file
-    :rtype: dict
+    :param old_config: configuration dictionary returned by the previous
+        `read()` call
+    :type old_config: dict
+    :returns: *(config, raw)* tuple, where *config* is the processed
+        configuration from the loaded configuration file and *raw* is
+        the configuration dictionary represented by the loaded
+        configuration file (possibly with some keys inherited from the
+        previously loaded configuration dictionary)
+    :rtype: tuple
     :raises evmapy.config.ConfigError: if an error occurred while
         loading the specified configuration file
     """
@@ -189,11 +197,15 @@ def load(device, name):
         path = _get_device_config_path(device)
     try:
         config_input = read(path)
+        if old_config:
+            for inheritable in ('axes', 'buttons'):
+                if inheritable not in config_input:
+                    config_input[inheritable] = old_config[inheritable]
         config = parse(config_input)
     except Exception as exc:
         raise ConfigError(exc, path)
     logging.getLogger().info("%s: loaded %s", device.fn, path)
-    return config
+    return (config, config_input)
 
 
 def read(path):
@@ -223,10 +235,11 @@ def parse(config_input):
     :raises evmapy.config.ConfigError: when an error is found while
         processing the configuration
     """
-    validate_parameters(config_input)
+    config_input_copy = copy.deepcopy(config_input)
+    validate_parameters(config_input_copy)
     config = {
         'events':   {},
-        'grab':     config_input['grab'],
+        'grab':     config_input_copy['grab'],
         'map':      {},
     }
     defaults = {
@@ -238,7 +251,7 @@ def parse(config_input):
     # actions; note that we can't directly compare the dictionaries as
     # there may be identical actions configured for two different events
     current_id = 0
-    events = config_input['axes'] + config_input['buttons']
+    events = config_input_copy['axes'] + config_input_copy['buttons']
     validate_events(events)
     for event in events:
         try:
@@ -250,7 +263,7 @@ def parse(config_input):
         event['previous'] = idle
         config['events'][event['code']] = event
         config['map'][event['code']] = []
-    for action in config_input['actions']:
+    for action in config_input_copy['actions']:
         for (parameter, default) in defaults.items():
             if parameter not in action:
                 action[parameter] = default

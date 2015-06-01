@@ -56,6 +56,7 @@ class Source(object):
         }
         self._device = device
         self._config = {}
+        self._raw_config = None
         self._grabbed = False
         self._event_history = [None, None]
         self._logger = logging.getLogger()
@@ -72,7 +73,9 @@ class Source(object):
         :raises evmapy.config.ConfigError: if an error occurred while
             loading the specified configuration file
         """
-        self._config = evmapy.config.load(self._device, name)
+        (self._config, self._raw_config) = evmapy.config.load(
+            self._device, name, self._raw_config
+        )
         if self._config['grab'] is True and self._grabbed is False:
             self._device.grab()
             self._grabbed = True

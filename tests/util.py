@@ -21,9 +21,6 @@
 Constants and functions used by test modules
 """
 
-import copy
-
-
 CONTROL_FD = 1
 DEVICE_FD = 2
 FAKE_CONFIG = {
@@ -113,14 +110,6 @@ FAKE_CONFIG = {
     ],
     'grab': False,
 }
-
-
-def get_fake_config():
-    """
-    Return a deep copy of the fake configuration dictionary. Needed
-    because evmapy.config.parse() modifies the dictionary passed to it.
-    """
-    return copy.deepcopy(FAKE_CONFIG)
 
 
 def set_attrs_from_dict(obj, attrs):

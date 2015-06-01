@@ -21,6 +21,7 @@
 Unit tests for the config module
 """
 
+import copy
 import evdev
 import json
 import tempfile
@@ -43,7 +44,7 @@ class TestConfigBase(unittest.TestCase):
         Check parse() behavior when configuration contains errors
         """
         (extra_config, fake_read) = args
-        bad_config = tests.util.get_fake_config()
+        bad_config = copy.deepcopy(tests.util.FAKE_CONFIG)
         for (key, config) in extra_config.items():
             try:
                 bad_config[key].extend(config)
@@ -126,11 +127,11 @@ class TestConfig(TestConfigBase):
         info = evmapy.util.get_app_info()
         fake_mkdir.side_effect = FileExistsError()
         with tempfile.NamedTemporaryFile(mode='w+') as temp:
-            evmapy.config.save(temp.name, tests.util.get_fake_config())
+            evmapy.config.save(temp.name, tests.util.FAKE_CONFIG)
             temp.seek(0)
             config = json.load(temp)
         fake_mkdir.assert_called_once_with(info['config_dir'])
-        self.assertDictEqual(tests.util.get_fake_config(), config)
+        self.assertDictEqual(tests.util.FAKE_CONFIG, config)
 
     @unittest.mock.patch('evmapy.config.read')
     def check_load_error(self, *args):
@@ -179,18 +180,39 @@ class TestConfig(TestConfigBase):
         """
         Test load() with a valid, default configuration file
         """
-        fake_config_json = json.dumps(tests.util.get_fake_config())
+        fake_config_json = json.dumps(tests.util.FAKE_CONFIG)
         fake_open = unittest.mock.mock_open(read_data=fake_config_json)
         fake_device = unittest.mock.Mock()
         fake_device.name = 'Foo Bar'
         fake_device.fn = '/dev/input/event0'
         with unittest.mock.patch('evmapy.config.open', fake_open, create=True):
-            config = evmapy.config.load(fake_device, None)
+            (config, _) = evmapy.config.load(fake_device, None)
         self.assertSetEqual(set(config.keys()), set(['events', 'grab', 'map']))
         self.assertEqual(len(config['map'][100]), 2)
         self.assertEqual(len(config['map'][101]), 1)
         self.assertEqual(len(config['map'][200]), 1)
         self.assertEqual(len(config['map'][300]), 0)
+
+    @unittest.mock.patch('logging.getLogger')
+    @unittest.mock.patch('evmapy.config.read')
+    def test_config_load_partial(self, fake_read, _):
+        """
+        Test load() behavior when old configuration is supplied
+        """
+        partial_config = {
+            'actions':  [],
+            'grab':     False,
+        }
+        fake_read.side_effect = [
+            tests.util.FAKE_CONFIG,
+            partial_config,
+        ]
+        fake_device = unittest.mock.Mock()
+        (_, old_config) = evmapy.config.load(fake_device, 'Foo.Bar.json')
+        try:
+            evmapy.config.load(fake_device, 'Foo.Bar.json', old_config)
+        except evmapy.config.ConfigError:
+            self.fail("No ConfigError should be raised")
 
     def test_config_param_req(self):
         """

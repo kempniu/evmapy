@@ -48,8 +48,8 @@ def mock_source(*args):
         'fd':   tests.util.DEVICE_FD,
     }
     tests.util.set_attrs_from_dict(fake_inputdevice.return_value, device_attrs)
-    fake_config = evmapy.config.parse(tests.util.get_fake_config())
-    fake_config_load.return_value = fake_config
+    fake_config = evmapy.config.parse(tests.util.FAKE_CONFIG)
+    fake_config_load.return_value = (fake_config, None)
     device = fake_inputdevice()
     return {
         'device':   device,
@@ -174,8 +174,8 @@ class TestSource(unittest.TestCase):
         requested to
         """
         fake_config_load.side_effect = [
-            {'grab': False},
-            {'grab': True},
+            ({'grab': False}, None),
+            ({'grab': True}, None),
         ]
         self.source.load_config()
         self.source.load_config()
@@ -188,8 +188,8 @@ class TestSource(unittest.TestCase):
         requested to
         """
         fake_config_load.side_effect = [
-            {'grab': True},
-            {'grab': False},
+            ({'grab': True}, None),
+            ({'grab': False}, None),
         ]
         self.source.load_config()
         self.source.load_config()

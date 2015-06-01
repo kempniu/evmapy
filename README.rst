@@ -104,7 +104,7 @@ If all goes well, pressing any button on your input device will cause the defaul
 Configuration
 -------------
 
-Configuration is stored in JSON files. You can generate one automatically using the ``--generate DEVICE`` command line option. Each configuration file is a representation of an object with the following properties:
+Configuration is stored in JSON files. You can generate one automatically using the ``--generate DEVICE`` command line option. Each configuration file is a representation of an object with the following (mandatory) properties:
 
 - *actions*: actions to take in response to events; each action has the following properties:
 
@@ -127,6 +127,10 @@ Configuration is stored in JSON files. You can generate one automatically using 
 
   - *(optional) hold*: if set to a positive value (which is only allowed when *mode* is **not** *sequence*), this action will only be triggered once sufficient triggers will have been active for the given number of seconds; otherwise, it will be triggered immediately once sufficient triggers are active; this value is a floating point number, i.e. fractions of seconds can be used; defaults to *0* (i.e. immediate triggering),
 
+- *grab*: if set to *true*, *evmapy* will become the only recipient of the events emitted by this input device.
+
+The following properties are only required to be set in the initial configuration file for a device:
+
 - *axes*: list of input device axes, each of which must have all of the following properties assigned:
 
   - *name*: user-friendly name of this axis,
@@ -139,9 +143,7 @@ Configuration is stored in JSON files. You can generate one automatically using 
 - *buttons*: list of input device keys/buttons, each of which must have all of the following properties assigned:
 
   - *name*: see *axes*,
-  - *code*: see *axes*,
-
-- *grab*: if set to *true*, *evmapy* will become the only recipient of the events emitted by this input device.
+  - *code*: see *axes*.
 
 If all this sounds too complicated, here are some examples to clear things up:
 
