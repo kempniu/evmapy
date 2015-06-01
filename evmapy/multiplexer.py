@@ -246,9 +246,6 @@ class Multiplexer(object):
             if not results:
                 # It's time for the next delayed action
                 self._perform_delayed_actions()
-            if self._uinput:
-                self._logger.debug("writing: code 00, type 00, val 00")
-                self._uinput.syn()
 
     def _perform_normal_actions(self, actions):
         """
@@ -333,6 +330,8 @@ class Multiplexer(object):
                 "writing: code %02d, type %02d, val %02d", ecode, etype, press
             )
             self._uinput.write(etype, ecode, int(press))
+            self._logger.debug("writing: code 00, type 00, val 00")
+            self._uinput.syn()
 
     def _execute_program(self, action):
         """
