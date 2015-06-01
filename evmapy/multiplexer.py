@@ -249,18 +249,19 @@ class Multiplexer(object):
 
     def _perform_normal_actions(self, actions):
         """
-        Perform the actions requested by a source in response to the
+        Start/stop actions requested by a source in response to the
         events it processed.
 
-        :param actions: list of *(action, direction)* tuples, each of
-            which specifies which action to perform in which "direction"
+        :param actions: list of *(action, start)* tuples, each of which
+            specifies which action to start (if *start* is *True*) or
+            stop (if *start* is *False*)
         :type actions: list
         :returns: None
         """
-        for (action, direction) in actions:
-            self._logger.debug("action=%s, direction=%s", action, direction)
+        for (action, start) in actions:
+            self._logger.debug("action=%s, start=%s", action, start)
             if action['hold'] == 0:
-                if direction == 'down':
+                if start:
                     if action['type'] == 'key':
                         self._uinput_synthesize(action, press=True)
                     elif action['type'] == 'exec':
@@ -269,7 +270,7 @@ class Multiplexer(object):
                     if action['type'] == 'key':
                         self._uinput_synthesize(action, press=False)
             else:
-                if direction == 'down':
+                if start:
                     # Schedule delayed action to trigger after hold time
                     action['when'] = time.time() + action['hold']
                     action['direction'] = 'down'

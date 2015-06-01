@@ -232,8 +232,8 @@ class TestMultiplexerLoop(TestMultiplexerBase):
         """
         (action, poll_device, fake_source, fake_system) = args
         actions = [
-            [(action, 'down')],
-            [(action, 'up')],
+            [(action, True)],
+            [(action, False)],
         ]
         fake_source.return_value.process.side_effect = actions
         poll_results = [DEVICE_POLL_EVENT if d else [] for d in poll_device]

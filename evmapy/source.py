@@ -194,10 +194,10 @@ class Source(object):
             if event_active:
                 action['trigger_active'][event_index] = True
                 if action['mode'] == 'any' or all(action['trigger_active']):
-                    retval.append((action, 'down'))
+                    retval.append((action, True))
             else:
                 if action['mode'] == 'any' or all(action['trigger_active']):
-                    retval.append((action, 'up'))
+                    retval.append((action, False))
                 action['trigger_active'][event_index] = False
         else:
             sequence = action['trigger']
@@ -207,7 +207,7 @@ class Source(object):
                         self._event_history[0] == sequence[current-1]):
                     action['sequence_cur'] += 1
                     if action['sequence_cur'] == len(sequence):
-                        retval.append((action, 'down'))
+                        retval.append((action, True))
                         action['sequence_cur'] = 1
                         action['sequence_done'] = True
                         self._event_history[1] = None
@@ -215,6 +215,6 @@ class Source(object):
                     action['sequence_cur'] = 1
             else:
                 if action['sequence_done'] and event_name == sequence[-1]:
-                    retval.append((action, 'up'))
+                    retval.append((action, False))
                     action['sequence_done'] = False
         return retval
