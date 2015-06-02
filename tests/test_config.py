@@ -85,10 +85,20 @@ class TestConfig(TestConfigBase):
         Test create() with a valid device path and a non-existent
         configuration file
         """
+        def fake_setitem(key, val):
+            """
+            Track changes made to the fake configuration
+            """
+            config[key] = val
+        config = {'actions': ['foo', 'bar']}
+        fake_generate.return_value.__setitem__.side_effect = fake_setitem
         fake_inputdevice.return_value.name = 'Foo Bar'
-        self.assertIsNone(evmapy.config.create('/dev/input/event0'))
+        self.assertIsNone(
+            evmapy.config.create('/dev/input/event0', with_actions=False)
+        )
         self.assertEqual(fake_generate.call_count, 1)
         self.assertEqual(fake_save.call_count, 1)
+        self.assertListEqual(config['actions'], [])
 
     @unittest.mock.patch('evdev.InputDevice')
     def test_config_generate(self, fake_inputdevice):

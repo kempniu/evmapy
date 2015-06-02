@@ -104,7 +104,7 @@ If all goes well, pressing any button on your input device will cause the defaul
 Configuration
 -------------
 
-Configuration is stored in JSON files. You can generate one automatically using the ``--generate DEVICE`` command line option. Each configuration file is a representation of an object with the following (mandatory) properties:
+Configuration is stored in JSON files. You can generate one automatically using the ``--generate DEVICE`` command line option (or ``--generate-minimal DEVICE`` if you don't want the default actions to be generated). Each configuration file is a representation of an object with the following (mandatory) properties:
 
 - *actions*: actions to take in response to events; each action has the following properties:
 

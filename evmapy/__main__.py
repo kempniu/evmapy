@@ -81,8 +81,10 @@ def main(argv=sys.argv[1:]):
                        help="list available devices")
     group.add_argument("-l", "--list", action='store_true',
                        help="list currently handled devices")
-    group.add_argument("-g", "--generate", metavar="DEVICE",
-                       help="generate configuration for DEVICE")
+    group.add_argument("-G", "--generate", metavar="DEVICE",
+                       help="generate a sample configuration for DEVICE")
+    group.add_argument("-g", "--generate-minimal", metavar="DEVICE",
+                       help="generate a minimal configuration for DEVICE")
     group.add_argument("-c", "--configure", metavar="DEVICE:FILE",
                        help="load DEVICE configuration from FILE")
     group.add_argument("-D", "--debug", action='store_true',
@@ -101,6 +103,8 @@ def main(argv=sys.argv[1:]):
             print("%(path)s: %(name)s" % device)
     elif args.generate:
         exit(evmapy.config.create(args.generate))
+    elif args.generate_minimal:
+        exit(evmapy.config.create(args.generate_minimal, with_actions=False))
     elif args.configure:
         try:
             (dev_path, config_file) = args.configure.split(':')

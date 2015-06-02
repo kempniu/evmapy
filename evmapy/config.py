@@ -79,13 +79,16 @@ def _get_device_config_path(device):
     return os.path.join(info['config_dir'], config_filename)
 
 
-def create(dev_path):
+def create(dev_path, with_actions=True):
     """
     Generate and save a default configuration file for the input device
     under the given path.
 
     :param dev_path: path to the device to create configuration for
     :type dev_path: str
+    :param with_actions: whether to include default actions in the
+        configuration created
+    :type with_actions: bool
     :returns: nothing on success, error string otherwise
     :rtype: None or str
     """
@@ -97,6 +100,8 @@ def create(dev_path):
     if os.path.exists(config_path):
         return "%s already exists, not overwriting" % config_path
     config = generate(device)
+    if not with_actions:
+        config['actions'] = []
     save(config_path, config)
 
 

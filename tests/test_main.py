@@ -142,6 +142,16 @@ class TestMain(unittest.TestCase):
         fake_create.assert_called_with('/dev/input/event0')
         self.assertEqual(fake_stdout.getvalue(), '')
 
+    @unittest.mock.patch('evmapy.config.create')
+    def test_main_generate_minimal(self, fake_create, fake_stdout):
+        """
+        $ evmapy --generate-minimal /dev/input/event0
+        """
+        with self.assertRaises(SystemExit):
+            evmapy.__main__.main(['--generate-minimal', '/dev/input/event0'])
+        fake_create.assert_called_with('/dev/input/event0', with_actions=False)
+        self.assertEqual(fake_stdout.getvalue(), '')
+
     def test_main_configure_bad(self, _):
         """
         $ evmapy --configure foo
