@@ -1,7 +1,7 @@
-.. image:: https://img.shields.io/travis/kempniu/evmapy.svg
+.. image:: https://img.shields.io/travis/kempniu/evmapy/master.svg
    :target: https://travis-ci.org/kempniu/evmapy
 
-.. image:: https://img.shields.io/coveralls/kempniu/evmapy.svg
+.. image:: https://img.shields.io/coveralls/kempniu/evmapy/master.svg
    :target: https://coveralls.io/r/kempniu/evmapy
 
 evmapy
