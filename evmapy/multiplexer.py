@@ -297,10 +297,10 @@ class Multiplexer(object):
         action = self._delayed[0]
         if action['type'] == 'key':
             if action['direction'] == 'down':
-                # Simulate a key press and queue its release in 10 ms to
+                # Simulate a key press and queue its release in 30 ms to
                 # make the synthesized event semi-realistic
                 self._uinput_synthesize(action, press=True)
-                action['when'] = time.time() + 0.01
+                action['when'] = time.time() + 0.03
                 action['direction'] = 'up'
                 self._delayed.append(action)
             else:
