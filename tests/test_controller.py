@@ -31,6 +31,9 @@ import evmapy.controller
 import tests.util
 
 
+EMPTY_REQUEST = {'wait': True}
+
+
 @unittest.mock.patch('os.chmod')
 @unittest.mock.patch('socket.socket')
 @unittest.mock.patch('os.mkdir')
@@ -244,12 +247,9 @@ class TestSendRequest(unittest.TestCase):
         Check if send_request() properly processes received responses
         """
         (fake_select, fake_socket, _, fake_remove) = args
-        request = {
-            'wait': True,
-        }
         fake_select.return_value = (fake_socket.return_value, None, None)
         fake_socket.return_value.recv.return_value = b'{"foo": "bar"}'
-        result = evmapy.controller.send_request(request)
+        result = evmapy.controller.send_request(EMPTY_REQUEST)
         self.assertEqual(fake_socket.return_value.bind.call_count, 1)
         self.assertDictEqual(result, {'foo': 'bar'})
         self.assertEqual(fake_remove.call_count, 1)
@@ -261,12 +261,9 @@ class TestSendRequest(unittest.TestCase):
         waiting for a response
         """
         (fake_select, _, _, fake_remove) = args
-        request = {
-            'wait': True,
-        }
         fake_select.return_value = (None, None, None)
         with self.assertRaises(SystemExit):
-            evmapy.controller.send_request(request)
+            evmapy.controller.send_request(EMPTY_REQUEST)
         self.assertEqual(fake_remove.call_count, 1)
 
     def test_send_request_not_running(self, *args):
@@ -275,10 +272,7 @@ class TestSendRequest(unittest.TestCase):
         running
         """
         (fake_socket, _, fake_remove) = args
-        request = {
-            'wait': True,
-        }
         fake_socket.return_value.sendto.side_effect = FileNotFoundError()
         with self.assertRaises(SystemExit):
-            evmapy.controller.send_request(request)
+            evmapy.controller.send_request(EMPTY_REQUEST)
         self.assertEqual(fake_remove.call_count, 1)
