@@ -21,7 +21,6 @@
 Unit tests for the Controller class
 """
 
-import errno
 import json
 import unittest
 import unittest.mock
@@ -36,15 +35,16 @@ EMPTY_REQUEST = {'wait': True}
 
 @unittest.mock.patch('os.chmod')
 @unittest.mock.patch('socket.socket')
+@unittest.mock.patch('evmapy.controller.send_request')
 @unittest.mock.patch('os.mkdir')
 @unittest.mock.patch('logging.getLogger')
 def mock_controller(*args):
     """
     Generate a Controller with mocked attributes
     """
-    (exception, fake_logger, fake_mkdir, fake_socket, _) = args
-    if exception:
-        fake_socket.return_value.bind.side_effect = exception
+    (exception, fake_logger, fake_mkdir, fake_send_request,
+     fake_socket, _) = args
+    fake_send_request.side_effect = exception
     fake_mkdir.side_effect = FileExistsError()
     fake_target = unittest.mock.Mock()
     controller = evmapy.controller.Controller(fake_target)
@@ -70,7 +70,9 @@ class TestController(unittest.TestCase):
         self.logger = None
         self.target = None
         self.socket = None
-        tests.util.set_attrs_from_dict(self, mock_controller(None))
+        tests.util.set_attrs_from_dict(
+            self, mock_controller(FileNotFoundError)
+        )
 
     def test_controller_socket_ok(self):
         """
@@ -83,14 +85,23 @@ class TestController(unittest.TestCase):
 
     def test_controller_socket_in_use(self):
         """
-        Test Controller behavior when the control socket is already used
+        Check Controller behavior when the control socket is already
+        used
         """
         with self.assertRaises(evmapy.controller.SocketInUseError):
-            mock_controller(OSError(errno.EADDRINUSE, "Foo"))
+            mock_controller(None)
+
+    @unittest.mock.patch('os.remove')
+    def test_controller_socket_stale(self, fake_remove):
+        """
+        Check Controller behavior when the control socket is stale
+        """
+        mock_controller(ConnectionRefusedError)
+        self.assertEqual(fake_remove.call_count, 1)
 
     def test_controller_socket_error(self):
         """
-        Test Controller behavior when an unhandled exception is raised
+        Check Controller behavior when an unhandled exception is raised
         while binding the control socket
         """
         with self.assertRaises(OSError):

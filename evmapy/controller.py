@@ -21,7 +21,6 @@
 :py:class:`Controller` class implementation
 """
 
-import errno
 import json
 import logging
 import os
@@ -127,13 +126,18 @@ class Controller(object):
         except FileExistsError:
             pass
         try:
-            control_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
-            control_socket.bind(control_socket_path)
-        except OSError as exc:
-            if exc.errno == errno.EADDRINUSE:
-                raise SocketInUseError()
-            else:
-                raise
+            send_request({
+                'command':  'list',
+                'wait':     True,
+            })
+            raise SocketInUseError
+        except ConnectionRefusedError:
+            self._logger.info("removing stale control socket")
+            os.remove(control_socket_path)
+        except FileNotFoundError:
+            pass
+        control_socket = socket.socket(socket.AF_UNIX, socket.SOCK_DGRAM)
+        control_socket.bind(control_socket_path)
         os.chmod(control_socket_path, stat.S_IRUSR | stat.S_IWUSR)
         self._socket = control_socket
 
