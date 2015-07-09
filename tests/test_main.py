@@ -112,8 +112,8 @@ class TestMain(unittest.TestCase):
         lines_printed = fake_stdout.getvalue().splitlines()
         self.assertEqual(len(lines_printed), len(fake_devices))
 
-    @unittest.mock.patch('evmapy.controller.send_request')
-    def test_main_list(self, fake_send_request, fake_stdout):
+    @unittest.mock.patch('evmapy.controller.perform_request')
+    def test_main_list(self, fake_perform_request, fake_stdout):
         """
         $ evmapy --list
         """
@@ -127,7 +127,7 @@ class TestMain(unittest.TestCase):
                 'path': '/dev/input/event1',
             },
         ]
-        fake_send_request.return_value = fake_devices
+        fake_perform_request.return_value = fake_devices
         evmapy.__main__.main(['--list'])
         lines_printed = fake_stdout.getvalue().splitlines()
         self.assertEqual(len(lines_printed), len(fake_devices))
@@ -159,13 +159,13 @@ class TestMain(unittest.TestCase):
         with self.assertRaises(SystemExit):
             evmapy.__main__.main(['--configure', 'foo'])
 
-    @unittest.mock.patch('evmapy.controller.send_request')
-    def test_main_configure_ok(self, fake_send_request, _):
+    @unittest.mock.patch('evmapy.controller.perform_request')
+    def test_main_configure_ok(self, fake_perform_request, _):
         """
         $ evmapy --configure /dev/input/event0:foo.json
         """
         evmapy.__main__.main(['--configure', '/dev/input/event0:foo.json'])
-        request = fake_send_request.call_args[0][0]
+        request = fake_perform_request.call_args[0][0]
         self.assertEqual(request['command'], 'config')
         self.assertEqual(request['device'], '/dev/input/event0')
         self.assertEqual(request['file'], 'foo.json')

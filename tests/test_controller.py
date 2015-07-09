@@ -262,17 +262,44 @@ class TestSendRequest(unittest.TestCase):
         """
         (fake_select, _, _, fake_remove) = args
         fake_select.return_value = (None, None, None)
-        with self.assertRaises(SystemExit):
+        with self.assertRaises(TimeoutError):
             evmapy.controller.send_request(EMPTY_REQUEST)
         self.assertEqual(fake_remove.call_count, 1)
 
-    def test_send_request_not_running(self, *args):
+
+class TestPerformRequest(unittest.TestCase):
+
+    """
+    Test perform_request()
+    """
+
+    @unittest.mock.patch('evmapy.controller.send_request')
+    def check_perform_request_error(self, *args):
         """
-        Check if send_request() properly reacts when evmapy is not
-        running
+        Ensure perform_request() exits the application when the given
+        exception is raised by send_request()
         """
-        (fake_socket, _, fake_remove) = args
-        fake_socket.return_value.sendto.side_effect = FileNotFoundError()
+        (exception, fake_send_request) = args
+        fake_send_request.side_effect = exception
         with self.assertRaises(SystemExit):
-            evmapy.controller.send_request(EMPTY_REQUEST)
-        self.assertEqual(fake_remove.call_count, 1)
+            evmapy.controller.perform_request(EMPTY_REQUEST)
+
+    def test_perform_request_no_socket(self):
+        """
+        Check perform_request() behavior when no control socket is found
+        """
+        self.check_perform_request_error(FileNotFoundError)
+
+    def test_perform_request_stale(self):
+        """
+        Check perform_request() behavior when the control socket is
+        stale
+        """
+        self.check_perform_request_error(ConnectionRefusedError)
+
+    def test_perform_request_timeout(self):
+        """
+        Check perform_request() behavior when there is no response from
+        the control socket within 1 second
+        """
+        self.check_perform_request_error(TimeoutError)

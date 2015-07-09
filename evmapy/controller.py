@@ -60,6 +60,11 @@ def send_request(request):
     :type request: dict
     :returns: if desired, response to request
     :rtype: None or dict
+    :raises ConnectionRefusedError: when no process is bound to the
+        control socket
+    :raises FileNotFoundError: when the control socket doesn't exist
+    :raises TimeoutError: if no response is received from the control
+        socket within 1 second
     """
     info = evmapy.util.get_app_info()
     client_socket_name = '%s-client.%d.socket' % (info['name'], os.getpid())
@@ -76,13 +81,30 @@ def send_request(request):
                 data = client_socket.recv(1024)
                 return json.loads(data.decode())
             else:
-                exit("Timeout waiting for a response from %s" % info['name'])
-    except FileNotFoundError:
+                raise TimeoutError
+    finally:
+        os.remove(client_socket_path)
+
+
+def perform_request(request):
+    """
+    Send the given request to the control socket and wait for a response
+    if desired, exiting if an exception is raised.
+
+    :param request: request to send
+    :type request: dict
+    :returns: if desired, response to request
+    :rtype: None or dict
+    """
+    info = evmapy.util.get_app_info()
+    try:
+        return send_request(request)
+    except (ConnectionRefusedError, FileNotFoundError):
         exit("No %s instance is running as %s" % (
             info['name'], info['user'].pw_name
         ))
-    finally:
-        os.remove(client_socket_path)
+    except TimeoutError:
+        exit("Timeout waiting for a response from %s" % info['name'])
 
 
 class Controller(object):

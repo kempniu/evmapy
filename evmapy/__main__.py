@@ -95,7 +95,7 @@ def main(argv=sys.argv[1:]):
             device = evdev.InputDevice(dev_path)
             print("%s: %s" % (device.fn, device.name))
     elif args.list:
-        devices = evmapy.controller.send_request({
+        devices = evmapy.controller.perform_request({
             'command':  'list',
             'wait':     True,
         })
@@ -110,7 +110,7 @@ def main(argv=sys.argv[1:]):
             (dev_path, config_file) = args.configure.split(':')
         except ValueError:
             exit("Bad --configure argument syntax")
-        evmapy.controller.send_request({
+        evmapy.controller.perform_request({
             'command':  'config',
             'device':   dev_path,
             'file':     config_file,
